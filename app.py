@@ -38,27 +38,27 @@ if "results" not in st.session_state:
     st.session_state.results = []
 
 # 🧭 타이틀 헤더
-st.title("🧭 CoachKG 강점 동적 내비게이터")
-st.caption("비회원 개방형 MVP - 3단계 하이브리드 강점 가치 지도 진단 서비스")
+st.title("🧭 동적 강점 내비게이터")
+st.caption("비회원 개방형 - 3단계 하이브리드 강점 가치 지도 진단 서비스")
 st.markdown("---")
 
 # -----------------------------------------------------------------------------
 # STEP 1: 익명 식별 정보 기입 및 1차 카드 소팅
 # -----------------------------------------------------------------------------
 if st.session_state.step == 1:
-    st.subheader("1단계: 정보 입력 및 자가 카드 소팅")
+    st.subheader("1단계: 정보 입력 및 강점 단어 고르기")
     st.info("💡 별도의 비밀번호가 필요 없는 완전 공개형 서비스입니다. 기재하신 정보는 중복 데이터 방지와 PDF 리포트 기입, 이력 복원에만 활용됩니다.")
     
     with st.form("user_entry_form"):
         col1, col2 = st.columns(2)
         with col1:
-            name = st.text_input("성함 또는 닉네임", placeholder="홍길동", help="리포트 표기용 이름")
+            name = st.text_input("이름 또는 닉네임", placeholder="홍길동", help="리포트 표기용 이름")
         with col2:
             email = st.text_input("이메일 주소", placeholder="yourname@domain.com", help="이전 진단 이력 재조회 및 복원용 식별 키")
             
         st.markdown("---")
-        st.write("📂 **자가 카드 소팅 (Self Card-Sorting)**")
-        st.write("아래 제시된 강점 목록 중 자신을 수식하는 가장 대표적이며 편안한 강점들을 골라주세요.")
+        st.write("📂 **강점 단어 고르기 (Self Card-Sorting)**")
+        st.write("아래 제시된 50가지 강점 목록 중 자신을 수식하는 가장 대표적이며 편안한 강점들을 골라주세요.")
         
         # 온톨로지에서 가용 강점 명단 로드
         ontology = load_ontology()
@@ -66,7 +66,7 @@ if st.session_state.step == 1:
         strength_by_name = {s["name"]: s["code"] for s in ontology["strengths"]}
         
         selected_a_names = st.multiselect(
-            "내가 평소 의식하지 않고도 자연스럽게 발휘하는 대표 강점들을 선택해 주세요 (A그룹)", 
+            "내가 평소 의식하지 않고도 자연스럽게 발휘하는 대표 강점들을 선택해 주세요.", 
             options=all_strengths,
             help="최소 1개 이상 선택해 주십시오."
         )
