@@ -38,7 +38,7 @@ if "results" not in st.session_state:
     st.session_state.results = []
 
 # 🧭 타이틀 헤더
-st.title("🧭 동적 강점 내비게이터")
+st.title("🧭 동적 강점 내비게이터 (비지니스 환경 친화적)")
 st.caption("비회원 개방형 - 3단계 하이브리드 강점 가치 지도 진단 서비스")
 st.markdown("---")
 
@@ -207,12 +207,28 @@ elif st.session_state.step == 3:
         st.write("### 🌌 나의 강점 지식 지도")
         st.caption("대표 강점 5종과 이들의 소속 덕목(삼각형), 그리고 강점들 사이에 흐르는 유기적인 보완 및 시너지 지형도입니다.")
         
-        # PyVis 동적 맵 생성 유틸 호출
+        # 1. 시스템 임시 디렉터리에 격리 생성된 경로를 안정적으로 반환받음
         html_path = build_pyvis_graph(st.session_state.browser_session_id, top_5)
         
+        # 2. 파일 물리 존재 여부 확인 후 유연하게 처리
         if os.path.exists(html_path):
-            with open(html_path, 'r', encoding='utf-8') as f:
-                components.html(f.read(), height=420, scrolling=True)
+            try:
+                with open(html_path, 'r', encoding='utf-8') as f:
+                    html_content = f.read()
+                
+                # [HTTPS 혼합 보안 경고 방어] PyVis 스크립트 리소스를 HTTPS 주소로 일괄 자동 보완
+                html_content = html_content.replace("http://cdnjs.cloudflare.com", "https://cdnjs.cloudflare.com")
+                html_content = html_content.replace("http://cdn.jsdelivr.net", "https://cdn.jsdelivr.net")
+                html_content = html_content.replace('src="http://', 'src="https://')
+                
+                # 3. 데이터 주입하여 렌더링 진행
+                components.html(html_content, height=420, scrolling=True)
+                
+            except Exception as e:
+                st.error(f"❌ 지도 템플릿을 정규화하는 과정에서 오류가 발생했습니다: {e}")
+        else:
+            # 4. 파일 생성 유실 시 빈칸 무반응 현상을 방지하기 위한 안내 레이어 추가
+            st.warning(f"⚠️ 임시 지도가 정상 경로에 생성되지 않았습니다. (지정 경로: {html_path})")
                 
     with col2:
         st.write("### 📑 최상위 강점 상세 정보")

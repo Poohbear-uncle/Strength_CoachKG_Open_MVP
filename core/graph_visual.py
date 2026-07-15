@@ -1,4 +1,5 @@
 import os
+import tempfile  # [보완] 안전한 시스템 임시 경로 활용을 위해 추가
 from pyvis.network import Network
 from core.assessment import load_ontology
 
@@ -9,13 +10,23 @@ def build_pyvis_graph(session_token, top_results):
     
     PyVis를 활용해 강점과 소속 덕목 간의 관계 맵을 3D 형태의 동적 HTML로 내보냅니다.
     """
-    # 1. 고유 파일명 지정 및 빌드 타겟 경로 정의
+    # 1. 고유 파일명 지정 및 시스템 임시 경로(Temp) 정의
     output_filename = f"temp_graph_{session_token}.html"
-    # 실행 시 Streamlit 호스팅 환경 상의 물리적 충돌을 피하기 위해 임시 파일로 격리 생성
-    output_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_filename)
+    
+    # [보완] Streamlit Cloud의 파일 쓰기 제한을 회피하기 위해 시스템 공식 임시 디렉터리 경로 활용
+    temp_dir = tempfile.gettempdir()
+    output_path = os.path.join(temp_dir, output_filename)
     
     # 2. PyVis 네트워크 객체 정의 (안정적인 물리 엔진 세팅)
-    net = Network(height="400px", width="100%", bgcolor="#fdfdfd", font_color="#2c3e50")
+    # [핵심 보완] cdn_resources='remote' 설정을 추가하여 로컬 'lib/' 폴더 생성을 원천 차단하고 원격 HTTPS CDN을 사용합니다.
+    net = Network(
+        height="400px", 
+        width="100%", 
+        bgcolor="#fdfdfd", 
+        font_color="#2c3e50",
+        cdn_resources='remote'
+    )
+    
     # 그래프 조작 제어 도구 숨김 및 노드 스프링 탄력성 강화
     net.toggle_physics(True)
     net.force_atlas_2based(gravity=-50, central_gravity=0.01, spring_length=100)
@@ -39,8 +50,8 @@ def build_pyvis_graph(session_token, top_results):
             code, 
             label=name, 
             title=f"강점: {name}<br>분석 점수: {score}점", 
-            color="#2ecc71", # 부드러운 초록
-            size=int(score * 5) + 10, # 점수가 높을수록 노드 크기 증가
+            color="#2ecc71", 
+            size=int(score * 5) + 10, 
             shape="dot"
         )
         
@@ -50,7 +61,7 @@ def build_pyvis_graph(session_token, top_results):
                 virtue_name, 
                 label=virtue_name, 
                 title=f"상위 덕목: {virtue_name}", 
-                color="#9b5de5", # 우아한 보라색
+                color="#9b5de5", 
                 size=28, 
                 shape="triangle"
             )
@@ -79,7 +90,6 @@ def build_pyvis_graph(session_token, top_results):
                     net.add_edge(code, con, value=1.0, color="#e74c3c", dashes=[5, 5], title="주의가 필요한 상충")
 
     # 5. 로컬 물리적 파일로 빌드 저장
-    # 사용자 브라우저 뷰포트에 잘 밀착되도록 반응형 조율 옵션 적용
     net.write_html(output_path)
     
     return output_path
