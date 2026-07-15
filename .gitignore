@@ -1,0 +1,11 @@
+# Python cache
+__pycache__/
+*.py[cod]
+.venv/
+
+# SQLite Database (사용자 진단 로그 및 개인정보 보호)
+database/*.db
+
+# Temporary assessment outputs (임시 세션 격리 파일 제외)
+temp_graph_*.html
+report_*.pdf
