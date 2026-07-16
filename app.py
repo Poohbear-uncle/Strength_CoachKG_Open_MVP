@@ -43,69 +43,69 @@ st.title("🧭 동적 강점 내비게이터")
 st.caption("비회원 개방형 - 3단계 하이브리드 강점 가치 지도 진단 서비스")
 st.markdown("---")
 
-# =============================================================================
-# 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드 - 정밀 추적 버전]
-# =============================================================================
-with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
-    st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
-    db_col1, db_col2, db_col3 = st.columns(3)
-    with db_col1:
-        st.metric("현재 진행 단계 (Step)", st.session_state.step)
-    with db_col2:
-        st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
-    with db_col3:
-        st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
+# # =============================================================================
+# # 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드 - 정밀 추적 버전]
+# # =============================================================================
+# with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
+#     st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
+#     db_col1, db_col2, db_col3 = st.columns(3)
+#     with db_col1:
+#         st.metric("현재 진행 단계 (Step)", st.session_state.step)
+#     with db_col2:
+#         st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
+#     with db_col3:
+#         st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
         
-    st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
-    if st.session_state.card_sorting:
-        a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
-        b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
-        c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
+#     st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
+#     if st.session_state.card_sorting:
+#         a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
+#         b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
+#         c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
         
-        if a_cnt == 0:
-            st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
-        else:
-            st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
-    else:
-        st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
+#         if a_cnt == 0:
+#             st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
+#         else:
+#             st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
+#     else:
+#         st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
         
-    st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
-    # [핵심 검증 스위치] DB 쓰기나 외부 싱크 과정에서 락(Lock)이 걸리는지 우회 점검하는 체크박스
-    bypass_db = st.checkbox("⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", value=False)
+#     st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
+#     # [핵심 검증 스위치] DB 쓰기나 외부 싱크 과정에서 락(Lock)이 걸리는지 우회 점검하는 체크박스
+#     bypass_db = st.checkbox("⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", value=False)
     
-    btn_col1, btn_col2, btn_col3 = st.columns(3)
-    with btn_col1:
-        if st.button("🔄 강제 Step 1로 리셋"):
-            st.session_state.step = 1
-            st.session_state.card_sorting = {}
-            st.session_state.results = []
-            st.session_state.user_meta = {}
-            st.rerun()
-    with btn_col2:
-        if st.button("⚠️ 강제 Step 2로 점프"):
-            st.session_state.step = 2
-            st.rerun()
-    with btn_col3:
-        if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
-            st.session_state.step = 3
-            st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
-            ontology = load_ontology()
-            dummy_results = []
-            for s in ontology["strengths"][:5]:
-                dummy_results.append({
-                    "code": s["code"],
-                    "name": s["name"],
-                    "virtue": s.get("virtue_name", "덕목군"),
-                    "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
-                    "group": "A",
-                    "final_score": 4.8,
-                    "summary": s.get("summary", "테스트용 설명문구입니다."),
-                    "keywords": s.get("keywords", ["키워드1", "키워드2"])
-                })
-            st.session_state.results = dummy_results
-            st.rerun()
+#     btn_col1, btn_col2, btn_col3 = st.columns(3)
+#     with btn_col1:
+#         if st.button("🔄 강제 Step 1로 리셋"):
+#             st.session_state.step = 1
+#             st.session_state.card_sorting = {}
+#             st.session_state.results = []
+#             st.session_state.user_meta = {}
+#             st.rerun()
+#     with btn_col2:
+#         if st.button("⚠️ 강제 Step 2로 점프"):
+#             st.session_state.step = 2
+#             st.rerun()
+#     with btn_col3:
+#         if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
+#             st.session_state.step = 3
+#             st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
+#             ontology = load_ontology()
+#             dummy_results = []
+#             for s in ontology["strengths"][:5]:
+#                 dummy_results.append({
+#                     "code": s["code"],
+#                     "name": s["name"],
+#                     "virtue": s.get("virtue_name", "덕목군"),
+#                     "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
+#                     "group": "A",
+#                     "final_score": 4.8,
+#                     "summary": s.get("summary", "테스트용 설명문구입니다."),
+#                     "keywords": s.get("keywords", ["키워드1", "키워드2"])
+#                 })
+#             st.session_state.results = dummy_results
+#             st.rerun()
             
-st.markdown("---")
+# st.markdown("---")
 
 # -----------------------------------------------------------------------------
 # STEP 1: 익명 식별 정보 기입 및 1차 카드 소팅 (개선형 3분류 카드 뷰)
@@ -361,12 +361,44 @@ elif st.session_state.step == 3:
                 
     with col2:
         st.write("### 📑 최상위 강점 상세 정보")
+        st.caption("💡 각 강점을 클릭하면 온톨로지(Graph) 기반의 과사용 위험성과 유기적 보완/상충 맥락을 조회할 수 있습니다.")
+        
+        # 온톨로지 단일 진실 공급원(SoT) 로드 및 매핑
+        ontology = load_ontology()
+        s_map = {s["code"]: s for s in ontology["strengths"]}
+        
         for idx, r in enumerate(top_5, 1):
+            s_detail = s_map.get(r["code"], {})
+            
+            # 온톨로지에서 풍부한 지식 속성 추출
+            overuse_text = s_detail.get("overuse", "이 강점을 지나치게 고집할 경우, 주변과의 불협화음이나 의도치 않은 오해를 살 수 있으니 유의하십시오.")
+            
+            # 관계망 코드를 한글 강점명으로 역매핑
+            synergy_list = [s_map[s_code]["name"] for s_code in s_detail.get("synergy_with", []) if s_code in s_map]
+            balances_list = [s_map[b_code]["name"] for b_code in s_detail.get("balances", []) if b_code in s_map]
+            conflicts_list = [s_map[c_code]["name"] for c_code in s_detail.get("conflicts_with", []) if c_code in s_map]
+            
             with st.expander(f"**{idx}순위 : {r['name']}** (분석 평점 : {r['final_score']} / 5.0)"):
                 st.write(f"📂 **소속 덕목** : {r['virtue']}")
                 st.write(f"💬 **핵심 요약** : {r['summary']}")
                 if r['keywords']:
-                    st.write(f"🏷️ **키워드** : {', '.join(r['keywords'])}")
+                    st.write(f"🏷️ **연관 키워드** : {', '.join(r['keywords'])}")
+                
+                st.markdown("---")
+                
+                # [개선 1] 과사용(Overuse) / 그림자(Shadow) 속성 노출
+                st.markdown(f"⚠️ **과사용(Overuse) 위험성 및 그림자:**")
+                st.info(overuse_text)
+                
+                # [개선 2] 관계망 역동성 정보 시각적 매핑
+                if synergy_list or balances_list or conflicts_list:
+                    st.markdown("🔗 **유기적 지식 관계망 역동성:**")
+                    if synergy_list:
+                        st.write(f"- 🤝 **시너지 효과 (Synergy):** {', '.join(synergy_list)}")
+                    if balances_list:
+                        st.write(f"- ⚖️ **상호 보완적 균형 (Balances):** {', '.join(balances_list)}")
+                    if conflicts_list:
+                        st.write(f"- ⚡ **주의할 대립/상충 (Conflicts):** {', '.join(conflicts_list)}")
                     
     # 리포트 다운로드 및 리셋 제어 버튼 설계
     st.markdown("---")
