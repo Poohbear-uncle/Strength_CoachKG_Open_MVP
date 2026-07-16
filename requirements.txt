@@ -2,3 +2,4 @@ streamlit>=1.30.0
 pyvis>=0.3.2
 fpdf2>=2.7.7
 neo4j>=5.15.0
+matplotlib>=3.5.0

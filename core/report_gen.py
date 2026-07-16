@@ -1,57 +1,15 @@
 import os
-import urllib.request
-from fpdf import FPDF
 from datetime import datetime
+from fpdf import FPDF
 
-# 폰트를 임시 저장할 디렉토리 경로 지정
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-FONT_REGULAR_PATH = os.path.join(DATA_DIR, "NanumGothic.ttf")
-FONT_BOLD_PATH = os.path.join(DATA_DIR, "NanumGothic-Bold.ttf")
+# [보완] Streamlit Cloud 백그라운드 드로잉을 위한 Matplotlib 및 NetworkX 탑재
+import matplotlib
+matplotlib.use('Agg')  # 가상 GUI 서버가 없는 서버용 논-인터랙티브 백엔드 강제 설정
+import matplotlib.pyplot as plt
+import networkx as nx
 
-def ensure_korean_fonts():
-    """
-    한글 나눔고딕 폰트의 존재 여부를 검사하고, 없을 경우 구글 폰트 공인 리포지토리에서 자동 다운로드합니다.
-    Streamlit Cloud 배포 시 발생할 수 있는 폰트 누락 리스크를 사전 차단합니다.
-    """
-    os.makedirs(DATA_DIR, exist_ok=True)
-    
-    # 1. 나눔고딕 Regular 다운로드
-    if not os.path.exists(FONT_REGULAR_PATH):
-        url_reg = "https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf"
-        try:
-            urllib.request.urlretrieve(url_reg, FONT_REGULAR_PATH)
-        except Exception as e:
-            print(f"[Warning] Regular 폰트 다운로드 실패: {e}")
-            
-    # 2. 나눔고딕 Bold 다운로드
-    if not os.path.exists(FONT_BOLD_PATH):
-        url_bold = "https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Bold.ttf"
-        try:
-            urllib.request.urlretrieve(url_bold, FONT_BOLD_PATH)
-        except Exception as e:
-            print(f"[Warning] Bold 폰트 다운로드 실패: {e}")
-
-class CoachKGPDF(FPDF):
-    """
-    브랜딩 요소(머리말, 꼬리말, 쪽 번호 등)를 포함하기 위해 FPDF 기본 클래스를 확장합니다.
-    """
-    def header(self):
-        # 상단 테두리 선 및 리포트 기본 타이틀 렌더링
-        self.set_text_color(120, 120, 120)
-        self.set_font("NanumGothic", "", 9)
-        self.cell(0, 10, "🧭 CoachKG 강점 동적 내비게이터 - 개인 분석 리포트", align="L", ln=True)
-        self.set_draw_color(200, 200, 200)
-        self.line(10, 18, 200, 18)
-        self.ln(5)
-
-    def footer(self):
-        # 하단 여백 위에 바닥글 및 쪽 번호 생성
-        self.set_y(-15)
-        self.set_draw_color(220, 220, 220)
-        self.line(10, self.get_y() - 2, 200, self.get_y() - 2)
-        self.set_text_color(150, 150, 150)
-        self.set_font("NanumGothic", "", 8)
-        self.cell(0, 10, f"Page {self.page_no()} | 본 리포트는 회원가입 없이 생성된 일회성 임시 소장 파일입니다.", align="C")
+# 기존 PDF 공통 부모 클래스 및 폰트 유틸 수입 (프로젝트 구조에 맞게 유지)
+from core.report_gen_helper import CoachKGPDF, ensure_korean_fonts, FONT_REGULAR_PATH, FONT_BOLD_PATH
 
 def generate_pdf_report(session_token, user_meta, top_5_results):
     """
@@ -101,17 +59,16 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     pdf.multi_cell(0, 6, info_text, border=0, fill=True, align="L")
     pdf.ln(8)
     
-    # [풍부성 보강] 온톨로지 싱크 준비
+    # 온톨로지 원천 데이터 로드 및 매핑
     from core.assessment import load_ontology
     ontology = load_ontology()
     s_map = {s["code"]: s for s in ontology["strengths"]}
     
     # 4. 상위 5대 강점 상세 데이터 루프 출력
     for idx, r in enumerate(top_5_results, 1):
-        # [레이아웃 보완] 3순위 시작 전에 강제로 페이지를 나누어 5순위 끈기/지속력 잘림 문제를 해결합니다.
+        # 3순위 시작 전에 강제로 페이지를 나누어 잘림 현상을 원천 방지
         if idx == 3:
             pdf.add_page()
-            # 2페이지 상단 보조 타이틀 렌더링
             pdf.set_font("NanumGothic", "B", 9)
             pdf.set_text_color(150, 150, 150)
             pdf.cell(0, 6, "CoachKG 강점 동적 내비게이터 - 개인 분석 리포트 (계속)", ln=True, align="R")
@@ -120,9 +77,9 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             pdf.ln(6)
             
         # 각 강점별 헤더 상자 (덕목 및 순위 표시)
-        pdf.set_fill_color(230, 240, 250) # 연한 청록색 계열 배경
+        pdf.set_fill_color(230, 240, 250)
         pdf.set_font("NanumGothic", "B", 11)
-        pdf.set_text_color(41, 128, 185) # 블루 톤 포인트
+        pdf.set_text_color(41, 128, 185)
         
         header_text = f"  [{idx}순위]  {r['name']}  (분석 평점: {r['final_score']} / 5.0)   | 소속 덕목: {r['virtue']}"
         pdf.cell(0, 8, header_text, ln=True, fill=True)
@@ -143,13 +100,14 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
         s_detail = s_map.get(r.get("code"), {}) if r.get("code") else {}
         overuse_text = s_detail.get("overuse", "과사용 시 주변과의 불협화음 혹은 번아웃을 유발할 우려가 있으니 성찰해 보시기 바랍니다.")
         
+        # 원천 데이터에 존재하는 모든 관계망 정보를 가져옵니다.
         synergy_list = [s_map[s_code]["name"] for s_code in s_detail.get("synergy_with", []) if s_code in s_map]
         balances_list = [s_map[b_code]["name"] for b_code in s_detail.get("balances", []) if b_code in s_map]
         conflicts_list = [s_map[c_code]["name"] for c_code in s_detail.get("conflicts_with", []) if c_code in s_map]
         
-        # 2) [속성 보강 1] 과사용(Overuse) 그림자 기입
+        # 2) [속성 보강 1] 과사용(Overuse) 그림자 기입 (음과 양의 보강)
         pdf.set_font("NanumGothic", "B", 9)
-        pdf.set_text_color(192, 57, 43) # 부드러운 다크레드 경고 톤
+        pdf.set_text_color(192, 57, 43)
         pdf.cell(0, 5, "⚠️ 과사용(Overuse) 위험성 및 그림자", ln=True)
         
         pdf.set_font("NanumGothic", "", 9)
@@ -157,7 +115,7 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
         pdf.multi_cell(0, 5, overuse_text)
         pdf.ln(1)
         
-        # 3) [속성 보강 2] 유기적 관계망 역동성 기입
+        # 3) [속성 보강 2] 유기적 관계망 역동성 기입 (원천 데이터에 존재하는 것 일괄 출력)
         relations_text_parts = []
         if synergy_list:
             relations_text_parts.append(f"🤝 시너지: {', '.join(synergy_list)}")
@@ -168,7 +126,7 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             
         if relations_text_parts:
             pdf.set_font("NanumGothic", "B", 9)
-            pdf.set_text_color(39, 174, 96) # 차분한 그린 톤 포인트
+            pdf.set_text_color(39, 174, 96)
             pdf.cell(0, 5, "🔗 유기적 지식 관계망 역동성", ln=True)
             
             pdf.set_font("NanumGothic", "", 8.5)
@@ -189,11 +147,126 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             keyword_str = ", ".join(keywords)
             pdf.cell(0, 5, f"  {keyword_str}", ln=True)
             
-        pdf.ln(4) # 다음 강점 상자와의 정교한 여백 조절
+        pdf.ln(4)
         
-    # 5. 임시 격리 파일명으로 파일 쓰기
+    # =========================================================================
+    # 5. [신규 이식: 대안 B] NetworkX + Matplotlib 기반 백그라운드 정적 지도 생성 및 인쇄
+    # =========================================================================
+    pdf.add_page()
+    pdf.set_font("NanumGothic", "B", 14)
+    pdf.set_text_color(44, 62, 80)
+    pdf.cell(0, 10, "🌌 나의 5대 지능형 강점 네트워크 지형도", ln=True, align="L")
+    pdf.ln(5)
+    
+    # 1) NetworkX 빈 그래프 생성
+    G = nx.Graph()
+    top_codes = [r["code"] for r in top_results]
+    added_nodes = set(top_codes)
+    
+    # 대표 노드 및 관계 데이터 구축
+    node_colors = []
+    node_labels = {}
+    
+    for r in top_results:
+        code = r["code"]
+        G.add_node(code)
+        node_colors.append('#2ecc71') # 대표 강점: 연록색
+        node_labels[code] = r["name"]
+        
+        # 소속 덕목 노드 연결 준비
+        virtue_name = r["virtue"]
+        if virtue_name not in G:
+            G.add_node(virtue_name)
+            node_colors.append('#9b5de5') # 덕목: 보라색
+            node_labels[virtue_name] = virtue_name
+        G.add_edge(code, virtue_name, color='#bdc3c7', weight=2, style='solid')
+        
+        # 주변부 연계 노드 확장 탐색
+        s_detail = s_map.get(code, {})
+        related = s_detail.get("synergy_with", []) + s_detail.get("balances", []) + s_detail.get("conflicts_with", [])
+        for rel_code in related:
+            if rel_code not in added_nodes and rel_code in s_map:
+                G.add_node(rel_code)
+                node_colors.append('#dfe6e9') # 보완 연계 영역: 밝은 회색
+                node_labels[rel_code] = s_map[rel_code]["name"]
+                added_nodes.add(rel_code)
+                
+    # 간선 색상 및 스타일 매핑
+    edge_colors = []
+    edge_styles = []
+    
+    for r in top_results:
+        code = r["code"]
+        s_detail = s_map.get(code, {})
+        
+        # 덕목 소속선은 회색 실선 처리
+        for u, v, d in G.edges(data=True):
+            if d.get('color') == '#bdc3c7':
+                continue
+                
+        # 시너지 관계선 (초록 실선)
+        for syn in s_detail.get("synergy_with", []):
+            if G.has_node(syn) and not G.has_edge(code, syn):
+                G.add_edge(code, syn, color='#2ecc71', style='solid')
+                
+        # 보완균형 관계선 (주황색 대시선)
+        for bal in s_detail.get("balances", []):
+            if G.has_node(bal) and not G.has_edge(code, bal):
+                G.add_edge(code, bal, color='#e67e22', style='dashed')
+                
+        # 주의상충 관계선 (빨간색 점선)
+        for con in s_detail.get("conflicts_with", []):
+            if G.has_node(con) and not G.has_edge(code, con):
+                G.add_edge(code, con, color='#e74c3c', style='dotted')
+
+    # 간선 스타일 목록 수집
+    edges = G.edges(data=True)
+    colors = [edge[2].get('color', '#bdc3c7') for edge in edges]
+    styles = [edge[2].get('style', 'solid') for edge in edges]
+    
+    # 백그라운드 캔버스에 그리기 작업 수행 (한글 폰트 적용 필수)
+    plt.figure(figsize=(7.5, 6), dpi=300)
+    plt.rcParams['font.family'] = 'NanumGothic' # 리눅스 시스템 폰트명 바인딩
+    plt.rcParams['axes.unicode_minus'] = False
+    
+    pos = nx.spring_layout(G, k=0.8, iterations=50) # 가시성 높은 탄성 레이아웃 배치
+    
+    # 노드 그리기
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=800)
+    # 라벨 그리기 (노드 내부 혹은 부근에 한글 매핑)
+    nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=8, font_weight='bold')
+    
+    # 스타일별 간선 드로잉
+    for edge, color, style in zip(edges, colors, styles):
+        nx.draw_networkx_edges(
+            G, pos, 
+            edgelist=[(edge[0], edge[1])], 
+            edge_color=color, 
+            style=style, 
+            width=1.5
+        )
+        
+    plt.title("🧭 CoachKG 강점 시너제틱 지형망", fontsize=11, fontweight='bold', pad=15)
+    plt.axis('off') # 불필요한 축 제거
+    plt.tight_layout()
+    
+    # 2) 임시 이미지 파일로 드로잉 결과 저장
+    temp_img_name = f"temp_mat_{session_token}.png"
+    temp_img_path = os.path.join(temp_dir, temp_img_name)
+    plt.savefig(temp_img_path, format="png", bbox_inches='tight')
+    plt.close() # 메모리 누수 방지
+    
+    # 3) PDF에 정적 고해상도 지형망 파일 내장 및 하단 마진 배치
+    if os.path.exists(temp_img_path):
+        pdf.image(temp_img_path, x=15, y=35, w=180)
+        # 이미지 삽입 후 사용이 끝난 임시 파일은 디스크 정리를 위해 물리적 소거
+        try:
+            os.remove(temp_img_path)
+        except:
+            pass
+
+    # 6. 임시 격리 파일명으로 최종 PDF 쓰기
     output_filename = f"report_{session_token}.pdf"
-    # 프로젝트 루트에 임시 리포트 빌드 저장
     output_pdf_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_filename)
     
     pdf.output(output_pdf_path)
