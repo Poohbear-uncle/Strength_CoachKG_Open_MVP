@@ -193,28 +193,48 @@ elif st.session_state.step == 2:
             
         submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기")
         
+        submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기")
+        
         if submit_step2:
-            # 1. 계산
-            raw_results = calculate_scores(st.session_state.card_sorting, survey_responses)
-            st.session_state.results = raw_results
-            
-            # 2. 로컬 SQLite3 DB 백업
-            save_user_run(
-                st.session_state.browser_session_id, 
-                meta["email"], 
-                meta["name"], 
-                raw_results
-            )
-            
-            # 3. 외부 Neo4j 동기화 트리거 (실패 시 무소음 예외 처리 통과)
-            top_5_for_sync = [
-                {"code": r["code"], "final_score": r["final_score"]} 
-                for r in raw_results if r["group"] == "A"
-            ][:5]
-            sync_to_neo4j_safely(meta["email"], meta["name"], top_5_for_sync)
-            
-            st.session_state.step = 3
-            st.rerun()
+            # [진단 및 안전 장치] 분석 단계를 시각화하여 병목 지점을 실시간 추적합니다.
+            with st.status("📊 결과를 분석하고 지도를 준비하는 중입니다...", expanded=True) as status:
+                try:
+                    # 1단계: 강점 가중치 연산 수행
+                    status.write("🔢 1. 강점 온톨로지 가중치 합산 연산 중...")
+                    raw_results = calculate_scores(st.session_state.card_sorting, survey_responses)
+                    st.session_state.results = raw_results
+                    
+                    # 2단계: SQLite 적재
+                    status.write("💾 2. 분석 로그 로컬 SQLite3 DB 적재 중...")
+                    save_user_run(
+                        st.session_state.browser_session_id, 
+                        meta["email"], 
+                        meta["name"], 
+                        raw_results
+                    )
+                    
+                    # 3단계: Neo4j AuraDB 싱크
+                    status.write("🌐 3. Neo4j AuraDB 클라우드 동기화 중 (예외 우회 대기)...")
+                    top_5_for_sync = [
+                        {"code": r["code"], "final_score": r["final_score"]} 
+                        for r in raw_results if r["group"] == "A"
+                    ][:5]
+                    sync_to_neo4j_safely(meta["email"], meta["name"], top_5_for_sync)
+                    
+                    # 완료 알림 및 페이지 전환
+                    status.update(label="✅ 모든 연산 및 저장이 안전하게 완료되었습니다!", state="complete")
+                    
+                    st.session_state.step = 3
+                    st.rerun()
+                    
+                except Exception as e:
+                    # 예외 발생 시 프로세스가 죽지 않도록 방어하고 명확한 원인을 화면에 출력
+                    status.update(label="❌ 처리 과정 중 에러가 발생했습니다.", state="error")
+                    st.error(f"📋 상세 에러 메시지: {e}")
+                    st.info(
+                        "💡 만약 에러 메시지에 'KeyError'나 'B'와 관련된 문구가 존재한다면, "
+                        "현재 'core/assessment.py' 내부 연산 식이 새로운 'B' 그룹 분류 데이터를 수용하지 못하는 상태입니다."
+                    )
 
 # -----------------------------------------------------------------------------
 # STEP 3: 동적 결과 분석 리포트 및 시각화 탐색
