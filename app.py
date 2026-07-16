@@ -409,7 +409,7 @@ elif st.session_state.step == 3:
                     mime="application/pdf"
                 )
                 
-    with col2:
+    with c2:
         if st.button("🔄 새로 진단 시작하기"):
             # 세션 변수 올인원 포맷 리셋
             st.session_state.step = 1
