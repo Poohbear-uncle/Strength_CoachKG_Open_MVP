@@ -38,9 +38,77 @@ if "results" not in st.session_state:
     st.session_state.results = []
 
 # 🧭 타이틀 헤더
-st.title("🧭 동적 강점 내비게이터 (비지니스 환경 친화적)")
+st.title("🧭 동적 강점 내비게이터")
 st.caption("비회원 개방형 - 3단계 하이브리드 강점 가치 지도 진단 서비스")
 st.markdown("---")
+
+# =============================================================================
+# 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드]
+# =============================================================================
+with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
+    st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
+    db_col1, db_col2, db_col3 = st.columns(3)
+    with db_col1:
+        st.metric("현재 진행 단계 (Step)", st.session_state.step)
+    with db_col2:
+        st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
+    with db_col3:
+        st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
+        
+    st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
+    if st.session_state.card_sorting:
+        a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
+        b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
+        c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
+        
+        # 만약 A가 0개라면 2단계 질문지가 아예 생성되지 않아 먹통이 됩니다.
+        if a_cnt == 0:
+            st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
+        else:
+            st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
+    else:
+        st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다. (1단계가 비정상적으로 스킵되었거나 세션이 초기화됨)")
+        
+    st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
+    st.caption("아래 우회 버튼들을 클릭하여 프로그램이 어느 구간에서 막히는지 직접 강제 돌파 테스트를 수행할 수 있습니다.")
+    
+    btn_col1, btn_col2, btn_col3 = st.columns(3)
+    with btn_col1:
+        if st.button("🔄 강제 Step 1로 리셋"):
+            st.session_state.step = 1
+            st.session_state.card_sorting = {}
+            st.session_state.results = []
+            st.session_state.user_meta = {}
+            st.rerun()
+    with btn_col2:
+        if st.button("⚠️ 강제 Step 2로 점프"):
+            st.session_state.step = 2
+            st.rerun()
+    with btn_col3:
+        # [매우 중요] 이 버튼을 통해 Step 3의 우주 지도 시각화 모듈이 정상인지 단독 테스트합니다.
+        if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
+            st.session_state.step = 3
+            st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
+            
+            # 가상의 강점 결과 데이터 임의 빌드
+            ontology = load_ontology()
+            dummy_results = []
+            for s in ontology["strengths"][:5]:
+                dummy_results.append({
+                    "code": s["code"],
+                    "name": s["name"],
+                    "virtue": s.get("virtue_name", "덕목군"),
+                    "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
+                    "group": "A",
+                    "final_score": 4.8,
+                    "summary": s.get("summary", "테스트용 설명문구입니다."),
+                    "keywords": s.get("keywords", ["키워드1", "키워드2"])
+                })
+            st.session_state.results = dummy_results
+            st.rerun()
+            
+st.markdown("---")
+# =============================================================================
 
 # -----------------------------------------------------------------------------
 # STEP 1: 익명 식별 정보 기입 및 3개 그룹 카드 소팅 (A, B, C)
