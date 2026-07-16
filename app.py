@@ -323,7 +323,21 @@ elif st.session_state.step == 3:
     
     with col1:
         st.write("### 🌌 나의 강점 지식 지도")
-        st.caption("대표 강점 5종과 이들의 소속 덕목(삼각형), 그리고 강점들 사이에 흐르는 유기적인 보완 및 시너지 지형도입니다.")
+        st.caption("대표 강점 5종과 이들의 소속 덕목(삼각형), 그리고 온톨로지 기반의 잠재적 보완/시너지 지형도입니다.")
+        
+        # [신규 추가] 깔끔하고 정돈된 CSS 기반 범례(Legend) 레이어 출력
+        st.markdown("""
+        <div style="background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 0.85em; line-height: 1.6; margin-bottom: 15px; color: #2c3e50;">
+            <strong>🧭 강점 지형도 범례 (Legend)</strong><br>
+            🟢 <b>초록 원:</b> 나의 대표 강점 (크기=점수) | 
+            ▲ <b>보라 삼각:</b> 상위 대덕목 | 
+            🔘 <b>회색 원:</b> 잠재적 연계 강점 영역<br>
+            <span style="color:#bdc3c7;">━━</span> 회색선: 덕목 소속 관계 | 
+            <span style="color:#2ecc71;">━━</span> 초록선: 상호 시너지 | 
+            <span style="color:#e67e22;">- -</span> 주황 대시선: 상호 보완 균형 | 
+            <span style="color:#e74c3c;">····</span> 빨간 점선: 주의 필요 상충
+        </div>
+        """, unsafe_allow_html=True)
         
         # 1. 파일 생성 및 저장 절대 경로 반환 받기
         html_path = build_pyvis_graph(st.session_state.browser_session_id, top_5)
@@ -333,8 +347,7 @@ elif st.session_state.step == 3:
                 with open(html_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
                 
-                # [초강력 우회 패치] 로컬 스크립트 'lib/bindings/utils.js' 호출 태그를 완전히 제거합니다.
-                # PyVis 지도를 그리는 데 이 상대 경로 파일은 필요 없으며, 남겨둘 시 404 에러로 인해 지도 출력을 불통으로 만듭니다.
+                # [초강력 우회 패치] utils.js 호출 제거
                 html_content = html_content.replace('<script type="text/javascript" src="lib/bindings/utils.js"></script>', '')
                 html_content = html_content.replace("<script type='text/javascript' src='lib/bindings/utils.js'></script>", '')
                 html_content = html_content.replace('<script src="lib/bindings/utils.js"></script>', '')
