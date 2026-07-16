@@ -191,11 +191,13 @@ elif st.session_state.step == 2:
             survey_responses[code] = score_val
             st.markdown("<br>", unsafe_allow_html=True)
             
-        # 중복이 제거된 단 하나의 최종 서브밋 버튼 정의
+        # 중복이 해결된 최종 서브밋 버튼
         submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기")
         
+        # 페이지 리런 흐름 제어용 트리거 플래그
+        transition_to_step3 = False
+        
         if submit_step2:
-            # [진단 및 안전 장치] 분석 단계를 시각화하여 병목 지점을 실시간 추적합니다.
             with st.status("📊 결과를 분석하고 지도를 준비하는 중입니다...", expanded=True) as status:
                 try:
                     # 1단계: 강점 가중치 연산 수행
@@ -220,20 +222,20 @@ elif st.session_state.step == 2:
                     ][:5]
                     sync_to_neo4j_safely(meta["email"], meta["name"], top_5_for_sync)
                     
-                    # 완료 알림 및 페이지 전환
-                    status.update(label="✅ 모든 연산 및 저장이 안전하게 완료되었습니다!", state="complete")
-                    
-                    st.session_state.step = 3
-                    st.rerun()
+                    # 모든 비즈니스 로직이 예외 없이 성공했을 시 플래그 가동
+                    status.update(label="✅ 모든 연산 및 저장이 완료되었습니다!", state="complete")
+                    transition_to_step3 = True
                     
                 except Exception as e:
-                    # 예외 발생 시 프로세스가 죽지 않도록 방어하고 명확한 원인을 화면에 출력
                     status.update(label="❌ 처리 과정 중 에러가 발생했습니다.", state="error")
                     st.error(f"📋 상세 에러 메시지: {e}")
-                    st.info(
-                        "💡 만약 에러 메시지에 'KeyError'나 'B'와 관련된 문구가 존재한다면, "
-                        "현재 'core/assessment.py' 내부 연산 식이 새로운 'B' 그룹 분류 데이터를 수용하지 못하는 상태입니다."
-                    )
+                    st.info("연산 식 혹은 DB 연동부의 구조적 충돌을 점검할 필요가 있습니다.")
+            
+            # [핵심 수술] st.rerun()을 try-except 및 st.status 블록 외부로 격리하여 
+            # RerunException을 삼키는 현상을 원천 방지합니다.
+            if transition_to_step3:
+                st.session_state.step = 3
+                st.rerun()
 
 # -----------------------------------------------------------------------------
 # STEP 3: 동적 결과 분석 리포트 및 시각화 탐색
