@@ -37,6 +37,10 @@ if "card_sorting" not in st.session_state:
     st.session_state.card_sorting = {}
 if "results" not in st.session_state:
     st.session_state.results = []
+# [추가] 변수 유실 방지 전역 상태 정의
+if "bypass_db" not in st.session_state:
+    st.session_state.bypass_db = False
+
 
 # 🧭 타이틀 헤더
 st.title("🧭 동적 강점 내비게이터")
@@ -69,10 +73,12 @@ st.markdown("---")
 #     else:
 #         st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
         
-#     st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
-#     # [핵심 검증 스위치] DB 쓰기나 외부 싱크 과정에서 락(Lock)이 걸리는지 우회 점검하는 체크박스
-#     bypass_db = st.checkbox("⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", value=False)
-    
+    # st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
+    #     # [수정] 체크 상태를 전역 세션 상태값에 바로 대입하여 영구 보존
+    #     st.session_state.bypass_db = st.checkbox(
+    #         "⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", 
+    #         value=st.session_state.bypass_db
+    #     )    
 #     btn_col1, btn_col2, btn_col3 = st.columns(3)
 #     with btn_col1:
 #         if st.button("🔄 강제 Step 1로 리셋"):
@@ -267,7 +273,8 @@ elif st.session_state.step == 2:
             st.write("✅ **[디버그 로그]** 1단계 연산 완료!")
             
             # 2. DB 및 외부 싱크 제어
-            if not bypass_db:
+            # [수정] 유실 없는 전역 세션 상태 딕셔너리에서 디버그 플래그 확인
+            if not st.session_state.get("bypass_db", False):
                 st.write("🔄 **[디버그 로그]** 2단계: 로컬 SQLite 데이터베이스 쓰기 수행 중...")
                 save_user_run(
                     st.session_state.browser_session_id, 
