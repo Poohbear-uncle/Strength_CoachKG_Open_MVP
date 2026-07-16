@@ -47,71 +47,71 @@ st.title("🧭 동적 강점 내비게이터")
 st.caption("비회원 개방형 - 3단계 하이브리드 강점 가치 지도 진단 서비스")
 st.markdown("---")
 
-# # =============================================================================
-# # 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드 - 정밀 추적 버전]
-# # =============================================================================
-# with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
-#     st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
-#     db_col1, db_col2, db_col3 = st.columns(3)
-#     with db_col1:
-#         st.metric("현재 진행 단계 (Step)", st.session_state.step)
-#     with db_col2:
-#         st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
-#     with db_col3:
-#         st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
+# =============================================================================
+# 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드 - 정상 복구본]
+# =============================================================================
+with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
+    st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
+    db_col1, db_col2, db_col3 = st.columns(3)
+    with db_col1:
+        st.metric("현재 진행 단계 (Step)", st.session_state.step)
+    with db_col2:
+        st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
+    with db_col3:
+        st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
         
-#     st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
-#     if st.session_state.card_sorting:
-#         a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
-#         b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
-#         c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
+    st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
+    if st.session_state.card_sorting:
+        a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
+        b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
+        c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
         
-#         if a_cnt == 0:
-#             st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
-#         else:
-#             st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
-#     else:
-#         st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
+        if a_cnt == 0:
+            st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
+        else:
+            st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
+    else:
+        st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
         
-    # st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
-    #     # [수정] 체크 상태를 전역 세션 상태값에 바로 대입하여 영구 보존
-    #     st.session_state.bypass_db = st.checkbox(
-    #         "⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", 
-    #         value=st.session_state.bypass_db
-    #     )    
-#     btn_col1, btn_col2, btn_col3 = st.columns(3)
-#     with btn_col1:
-#         if st.button("🔄 강제 Step 1로 리셋"):
-#             st.session_state.step = 1
-#             st.session_state.card_sorting = {}
-#             st.session_state.results = []
-#             st.session_state.user_meta = {}
-#             st.rerun()
-#     with btn_col2:
-#         if st.button("⚠️ 강제 Step 2로 점프"):
-#             st.session_state.step = 2
-#             st.rerun()
-#     with btn_col3:
-#         if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
-#             st.session_state.step = 3
-#             st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
-#             ontology = load_ontology()
-#             dummy_results = []
-#             for s in ontology["strengths"][:5]:
-#                 dummy_results.append({
-#                     "code": s["code"],
-#                     "name": s["name"],
-#                     "virtue": s.get("virtue_name", "덕목군"),
-#                     "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
-#                     "group": "A",
-#                     "final_score": 4.8,
-#                     "summary": s.get("summary", "테스트용 설명문구입니다."),
-#                     "keywords": s.get("keywords", ["키워드1", "키워드2"])
-#                 })
-#             st.session_state.results = dummy_results
-#             st.rerun()
+    st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
+    # [수정] 체크 상태를 전역 세션 상태값에 바로 대입하여 영구 보존
+    st.session_state.bypass_db = st.checkbox(
+        "⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", 
+        value=st.session_state.bypass_db
+    )    
+    btn_col1, btn_col2, btn_col3 = st.columns(3)
+    with btn_col1:
+        if st.button("🔄 강제 Step 1로 리셋"):
+            st.session_state.step = 1
+            st.session_state.card_sorting = {}
+            st.session_state.results = []
+            st.session_state.user_meta = {}
+            st.rerun()
+    with btn_col2:
+        if st.button("⚠️ 강제 Step 2로 점프"):
+            st.session_state.step = 2
+            st.rerun()
+    with btn_col3:
+        if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
+            st.session_state.step = 3
+            st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
+            ontology = load_ontology()
+            dummy_results = []
+            for s in ontology["strengths"][:5]:
+                dummy_results.append({
+                    "code": s["code"],
+                    "name": s["name"],
+                    "virtue": s.get("virtue_name", "덕목군"),
+                    "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
+                    "group": "A",
+                    "final_score": 4.8,
+                    "summary": s.get("summary", "테스트용 설명문구입니다."),
+                    "keywords": s.get("keywords", ["키워드1", "키워드2"])
+                })
+            st.session_state.results = dummy_results
+            st.rerun()
             
-# st.markdown("---")
+st.markdown("---")
 
 # -----------------------------------------------------------------------------
 # STEP 1: 익명 식별 정보 기입 및 1차 카드 소팅 (개선형 3분류 카드 뷰)
@@ -273,7 +273,6 @@ elif st.session_state.step == 2:
             st.write("✅ **[디버그 로그]** 1단계 연산 완료!")
             
             # 2. DB 및 외부 싱크 제어
-            # [수정] 유실 없는 전역 세션 상태 딕셔너리에서 디버그 플래그 확인
             if not st.session_state.get("bypass_db", False):
                 st.write("🔄 **[디버그 로그]** 2단계: 로컬 SQLite 데이터베이스 쓰기 수행 중...")
                 save_user_run(
@@ -334,24 +333,11 @@ elif st.session_state.step == 3:
                 with open(html_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
                 
-                # [핵심 패치] PyVis가 생성한 로컬 자바스크립트 종속성을 HTML에 통째로 내장시킵니다.
-                base_dir = os.path.dirname(html_path)
-                utils_js_path = os.path.join(base_dir, "lib", "bindings", "utils.js")
-                
-                if os.path.exists(utils_js_path):
-                    with open(utils_js_path, 'r', encoding='utf-8') as js_f:
-                        utils_js_content = js_f.read()
-                    
-                    # 다양한 형태의 script 태그 정의에 대비해 일괄 직접 치환 수행
-                    tag_double = '<script type="text/javascript" src="lib/bindings/utils.js"></script>'
-                    tag_single = "<script type='text/javascript' src='lib/bindings/utils.js'></script>"
-                    tag_simple = '<script src="lib/bindings/utils.js"></script>'
-                    
-                    inline_script = f'<script type="text/javascript">{utils_js_content}</script>'
-                    
-                    html_content = html_content.replace(tag_double, inline_script)
-                    html_content = html_content.replace(tag_single, inline_script)
-                    html_content = html_content.replace(tag_simple, inline_script)
+                # [초강력 우회 패치] 로컬 스크립트 'lib/bindings/utils.js' 호출 태그를 완전히 제거합니다.
+                # PyVis 지도를 그리는 데 이 상대 경로 파일은 필요 없으며, 남겨둘 시 404 에러로 인해 지도 출력을 불통으로 만듭니다.
+                html_content = html_content.replace('<script type="text/javascript" src="lib/bindings/utils.js"></script>', '')
+                html_content = html_content.replace("<script type='text/javascript' src='lib/bindings/utils.js'></script>", '')
+                html_content = html_content.replace('<script src="lib/bindings/utils.js"></script>', '')
                 
                 # HTTPS 환경 보안 우회 패치 추가 적용
                 html_content = html_content.replace("http://cdnjs.cloudflare.com", "https://cdnjs.cloudflare.com")
