@@ -191,8 +191,7 @@ elif st.session_state.step == 2:
             survey_responses[code] = score_val
             st.markdown("<br>", unsafe_allow_html=True)
             
-        submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기")
-        
+        # 중복이 제거된 단 하나의 최종 서브밋 버튼 정의
         submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기")
         
         if submit_step2:
