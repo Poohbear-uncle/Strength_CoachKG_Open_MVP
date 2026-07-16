@@ -34,10 +34,16 @@
   "strengths": [
     {
       "code": "STR_PERSEVERANCE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ACHIEVEMENT_ORIENTED"
+      ],
+      "conflicts_with": [
+        "PSTR_FLEXIBILITY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_FLEXIBILITY"
+      ],
       "name": "끈기/지속력",
       "english_name": "Perseverance",
       "virtue_name": "성취",
@@ -49,14 +55,22 @@
         "불굴의 의지",
         "목표 완수",
         "그릿(Grit)"
-      ]
+      ],
+      "overuse": "중단해야 할 무의미한 목표에 집착하여 시간과 자원을 낭비하는 무모한 고집으로 변질될 수 있습니다."
     },
     {
       "code": "STR_PRUDENCE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
+      "conflicts_with": [
+        "PSTR_ADVENTURE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_INITIATIVE",
+        "PSTR_ADVENTURE"
+      ],
       "name": "신중함",
       "english_name": "Prudence",
       "virtue_name": "성취",
@@ -68,18 +82,21 @@
         "신중함",
         "시나리오 검토",
         "리스크 관리"
-      ]
+      ],
+      "overuse": "지나친 위험 회피 성향으로 인해 행동을 결단하지 못하고 기회를 놓치는 우유부단함으로 이어집니다."
     },
     {
       "code": "PSTR_ACTION",
       "synergy_with": [
-        "PSTR_ADVENTURE"
+        "PSTR_INITIATIVE"
       ],
       "conflicts_with": [
-        "PSTR_DETAIL"
+        "STR_PRUDENCE"
       ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PRUDENCE"
+      ],
       "name": "실천/행동",
       "english_name": "Action",
       "virtue_name": "성취",
@@ -91,14 +108,22 @@
         "추진력",
         "민첩성",
         "프로토타입 실행"
-      ]
+      ],
+      "overuse": "충분한 숙고나 계획 없이 성급하게 행동에 옮겨 예상치 못한 리스크를 초래할 수 있습니다."
     },
     {
       "code": "PSTR_HARDWORK",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_PERSEVERANCE"
+      ],
+      "conflicts_with": [
+        "STR_HUMOR"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_ZEST",
+        "STR_SELF_REGULATION"
+      ],
       "name": "성실/노력",
       "english_name": "Hardwork",
       "virtue_name": "성취",
@@ -110,14 +135,21 @@
         "노력 지향",
         "기본기 충실",
         "규칙적 루틴"
-      ]
+      ],
+      "overuse": "자신의 체력적 한계를 무시하고 일에 매몰되어 일과 삶의 균형을 잃고 번아웃에 빠질 위험이 큽니다."
     },
     {
       "code": "PSTR_RESPONSIBILITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_HARDWORK"
+      ],
+      "conflicts_with": [
+        "PSTR_FLEXIBILITY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_DIPLOMACY"
+      ],
       "name": "책임감",
       "english_name": "Responsibility",
       "virtue_name": "성취",
@@ -129,14 +161,21 @@
         "약속 이행",
         "절대적 신뢰",
         "끝장 정신"
-      ]
+      ],
+      "overuse": "타인의 몫까지 과도하게 책임지려 하여 스스로 감당하기 어려운 무거운 중압감에 시달릴 수 있습니다."
     },
     {
       "code": "PSTR_TIME_OPTIMIZATION",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_DETAIL"
+      ],
+      "conflicts_with": [
+        "PSTR_ADAPTABILITY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ADAPTABILITY"
+      ],
       "name": "시간 최적화",
       "english_name": "Time optimization",
       "virtue_name": "성취",
@@ -148,14 +187,21 @@
         "시간 효율",
         "집중과 차단",
         "생산성"
-      ]
+      ],
+      "overuse": "모든 일정을 지나치게 통제하려 하여 함께 협업하는 동료들에게 강박적인 압박감을 줄 수 있습니다."
     },
     {
       "code": "PSTR_DETAIL",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
+      "conflicts_with": [
+        "PSTR_STRATEGIC_THINKING"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PERSPECTIVE"
+      ],
       "name": "디테일/세심함",
       "english_name": "Detail",
       "virtue_name": "성취",
@@ -167,14 +213,22 @@
         "완성도 극대화",
         "오류 색출",
         "정합성"
-      ]
+      ],
+      "overuse": "작은 미시적 디테일에만 너무 집착한 나머지, 숲을 보지 못하고 전체의 큰 흐름(대안)을 놓칠 수 있습니다."
     },
     {
       "code": "PSTR_ACHIEVEMENT_ORIENTED",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_HARDWORK"
+      ],
+      "conflicts_with": [
+        "PSTR_EMPATHY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_KINDNESS",
+        "PSTR_EMPATHY"
+      ],
       "name": "성취 지향",
       "english_name": "Achievement-oriented",
       "virtue_name": "성취",
@@ -186,16 +240,21 @@
         "탁월성 추구",
         "지표 중심",
         "성공 갈망"
-      ]
+      ],
+      "overuse": "오직 정량적 성과와 목표 달성에만 매몰되어 과정에서의 인간적 가치와 배려를 간과하기 쉽습니다."
     },
     {
       "code": "PSTR_STRATEGIC_THINKING",
       "synergy_with": [
-        "PSTR_SOLUTION"
+        "STR_PERSPECTIVE"
       ],
-      "conflicts_with": [],
+      "conflicts_with": [
+        "PSTR_DETAIL"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ACTION"
+      ],
       "name": "전략적 사고",
       "english_name": "Strategic thinking",
       "virtue_name": "성취",
@@ -207,14 +266,21 @@
         "시나리오 플래닝",
         "자원 배치",
         "맥락 분석"
-      ]
+      ],
+      "overuse": "현실적인 실행 방안보다는 상위 기획과 분석에만 에너지를 쏟아 탁상공론에 그칠 우려가 있습니다."
     },
     {
       "code": "PSTR_IMPROVEMENT",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_LOVE_OF_LEARNING"
+      ],
+      "conflicts_with": [
+        "STR_SELF_REGULATION"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_GRATITUDE"
+      ],
       "name": "성장/개선",
       "english_name": "Improvement",
       "virtue_name": "성취",
@@ -226,14 +292,21 @@
         "비효율 소거",
         "카이젠",
         "지속 성장"
-      ]
+      ],
+      "overuse": "지속적인 개선과 완벽주의에만 집착하여 현재의 성과에 만족하지 못하고 끊임없는 불안감을 느낍니다."
     },
     {
       "code": "PSTR_COMPETITION",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ACHIEVEMENT_ORIENTED"
+      ],
+      "conflicts_with": [
+        "STR_TEAMWORK"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_TEAMWORK"
+      ],
       "name": "경쟁심",
       "english_name": "Competition",
       "virtue_name": "성취",
@@ -245,16 +318,22 @@
         "벤치마킹 타겟",
         "수치적 승리",
         "한계 돌파"
-      ]
+      ],
+      "overuse": "동료를 협력자가 아닌 오직 이겨야 할 적으로 보아 조직 내 불필요한 적대감과 갈등을 부추길 수 있습니다."
     },
     {
       "code": "STR_KINDNESS",
-      "synergy_with": [],
+      "synergy_with": [
+        "PSTR_EMPATHY"
+      ],
       "conflicts_with": [
-        "STR_SELF_REGULATION"
+        "PSTR_CRITIQUE"
       ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_SELF_REGULATION",
+        "STR_BRAVERY"
+      ],
       "name": "친절함",
       "english_name": "Kindness",
       "virtue_name": "관계",
@@ -267,16 +346,22 @@
         "나눔",
         "보살핌",
         "배려"
-      ]
+      ],
+      "overuse": "자신의 정서적 욕구를 무시한 채 타인의 요구를 거절하지 못해 만성 피로와 감정적 소모를 겪게 됩니다."
     },
     {
       "code": "STR_TEAMWORK",
       "synergy_with": [
-        "STR_LEADERSHIP"
+        "PSTR_HARMONY"
       ],
-      "conflicts_with": [],
+      "conflicts_with": [
+        "PSTR_INITIATIVE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_BRAVERY",
+        "PSTR_CRITIQUE"
+      ],
       "name": "시민의식/협동",
       "english_name": "Teamwork",
       "virtue_name": "관계",
@@ -288,14 +373,21 @@
         "시민정신",
         "책임 분담",
         "조화와 연대"
-      ]
+      ],
+      "overuse": "집단의 의견에 맹목적으로 동조하여 개인의 독립적이고 주체적인 비판 목소리를 내지 못하게 됩니다."
     },
     {
       "code": "STR_LEADERSHIP",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_PERSUASION"
+      ],
+      "conflicts_with": [
+        "STR_HUMILITY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_HUMILITY"
+      ],
       "name": "리더십",
       "english_name": "Leadership",
       "virtue_name": "관계",
@@ -307,14 +399,22 @@
         "조직 조율",
         "구성원 임파워먼트",
         "행동 유도"
-      ]
+      ],
+      "overuse": "강력한 주도력의 과용으로 인해 구성원들의 자율성을 침해하고 독단적인 지배 성향을 띨 수 있습니다."
     },
     {
       "code": "STR_FAIRNESS",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_CRITIQUE"
+      ],
+      "conflicts_with": [
+        "STR_FORGIVENESS"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_EMPATHY",
+        "STR_FORGIVENESS"
+      ],
       "name": "공정함",
       "english_name": "Fairness",
       "virtue_name": "관계",
@@ -326,16 +426,21 @@
         "정의 구현",
         "기회 균등",
         "편견 배제"
-      ]
+      ],
+      "overuse": "규정과 기계적 형평성에만 과하게 집착하여 개별 구성원이 처한 특수한 사정과 맥락을 참작하지 못합니다."
     },
     {
       "code": "STR_FORGIVENESS",
       "synergy_with": [
-        "STR_HUMILITY"
+        "STR_KINDNESS"
       ],
-      "conflicts_with": [],
+      "conflicts_with": [
+        "PSTR_CRITIQUE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_FAIRNESS"
+      ],
       "name": "용서",
       "english_name": "Forgiveness",
       "virtue_name": "관계",
@@ -347,14 +452,21 @@
         "화해 유도",
         "원망 내려놓기",
         "수용"
-      ]
+      ],
+      "overuse": "해를 끼친 타인에게 무조건적인 용서를 반복하여 상대방의 부조리한 행동을 학습 및 방조하는 결과를 낳습니다."
     },
     {
       "code": "STR_SOCIAL_INTELLIGENCE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_DIPLOMACY"
+      ],
+      "conflicts_with": [
+        "STR_HONESTY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_HONESTY"
+      ],
       "name": "사회적 지능",
       "english_name": "Social Intelligence",
       "virtue_name": "관계",
@@ -366,16 +478,21 @@
         "맥락 감각",
         "대인 외교력",
         "눈치"
-      ]
+      ],
+      "overuse": "상황에 맞춰 지나치게 처세를 조율하다 보니, 타인에게 기회주의적이거나 가식적인 사람으로 비칠 수 있습니다."
     },
     {
       "code": "PSTR_EMPATHY",
-      "synergy_with": [],
+      "synergy_with": [
+        "STR_KINDNESS"
+      ],
       "conflicts_with": [
         "PSTR_CRITIQUE"
       ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
       "name": "공감 능력",
       "english_name": "Empathy",
       "virtue_name": "관계",
@@ -387,14 +504,21 @@
         "마음 읽기",
         "심리적 안전",
         "따뜻한 유대"
-      ]
+      ],
+      "overuse": "타인의 감정적 고통과 슬픔을 지나치게 투사하여 흡수함으로써 심각한 정서적 피로와 우울감에 노출됩니다."
     },
     {
       "code": "PSTR_SOCIABILITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_COMMUNICATION"
+      ],
+      "conflicts_with": [
+        "PSTR_CRITIQUE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_SELF_REGULATION"
+      ],
       "name": "사교성",
       "english_name": "Sociability",
       "virtue_name": "관계",
@@ -406,14 +530,21 @@
         "아이스브레이킹",
         "네트워킹",
         "마당발"
-      ]
+      ],
+      "overuse": "넓은 인맥 구축에만 과도하게 에너지를 써 정작 깊이 있는 소수와의 신뢰 관계를 다지지 못할 수 있습니다."
     },
     {
       "code": "PSTR_ACTIVE_LISTENING",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_EMPATHY"
+      ],
+      "conflicts_with": [
+        "PSTR_PERSUASION"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_PERSUASION"
+      ],
       "name": "경청",
       "english_name": "Active listening",
       "virtue_name": "관계",
@@ -425,14 +556,21 @@
         "존중의 소통",
         "메시지 정독",
         "수용의 눈빛"
-      ]
+      ],
+      "overuse": "수용과 경청에만 집중하여 정작 본인의 확고한 입장이나 필요한 주장을 확실히 관철하지 못합니다."
     },
     {
       "code": "PSTR_DIPLOMACY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_SOCIAL_INTELLIGENCE"
+      ],
+      "conflicts_with": [
+        "STR_HONESTY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_HONESTY"
+      ],
       "name": "외교적 수완",
       "english_name": "Diplomacy",
       "virtue_name": "관계",
@@ -444,14 +582,21 @@
         "실리 타협",
         "평화적 출로",
         "윈윈 모델"
-      ]
+      ],
+      "overuse": "대립을 지나치게 회피하려다 보니 중요한 논쟁 국면에서 지나치게 모호한 중립적 입장만 고수하게 됩니다."
     },
     {
       "code": "PSTR_RECOGNITION",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_KINDNESS"
+      ],
+      "conflicts_with": [
+        "PSTR_CRITIQUE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_CRITIQUE"
+      ],
       "name": "인정/격려",
       "english_name": "Recognition",
       "virtue_name": "관계",
@@ -463,16 +608,22 @@
         "자긍심 충전",
         "칭찬 피드백",
         "성장 자극"
-      ]
+      ],
+      "overuse": "칭찬과 조율을 남발하여 정작 엄격한 피드백과 객관적인 평가가 무뎌지는 결과를 초래할 수 있습니다."
     },
     {
       "code": "PSTR_HARMONY",
-      "synergy_with": [],
+      "synergy_with": [
+        "STR_TEAMWORK"
+      ],
       "conflicts_with": [
-        "STR_BRAVERY"
+        "PSTR_INITIATIVE"
       ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_BRAVERY",
+        "PSTR_INITIATIVE"
+      ],
       "name": "조화",
       "english_name": "Harmony",
       "virtue_name": "관계",
@@ -484,16 +635,21 @@
         "온화한 중재",
         "평화 정착",
         "동반 상생"
-      ]
+      ],
+      "overuse": "평화와 타협만을 강요하여, 조직의 건강한 성장을 위해 필수적인 건설적 파괴와 논쟁을 억압하게 됩니다."
     },
     {
       "code": "PSTR_COMMUNICATION",
       "synergy_with": [
-        "PSTR_RECOGNITION"
+        "PSTR_SOCIABILITY"
       ],
-      "conflicts_with": [],
+      "conflicts_with": [
+        "PSTR_ACTIVE_LISTENING"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ACTIVE_LISTENING"
+      ],
       "name": "소통 능력",
       "english_name": "Communication",
       "virtue_name": "관계",
@@ -505,14 +661,21 @@
         "심층 융합",
         "이해의 가교",
         "스토리텔링"
-      ]
+      ],
+      "overuse": "자신의 생각과 표현을 지나치게 쏟아내어 타인의 발언권을 침해하거나 불필요한 구설을 만들 수 있습니다."
     },
     {
       "code": "PSTR_PERSUASION",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_LEADERSHIP"
+      ],
+      "conflicts_with": [
+        "PSTR_ACTIVE_LISTENING"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ACTIVE_LISTENING"
+      ],
       "name": "설득력",
       "english_name": "Persuasion",
       "virtue_name": "관계",
@@ -524,14 +687,22 @@
         "심리적 포섭",
         "방향 선회",
         "영향력"
-      ]
+      ],
+      "overuse": "상대방의 입장을 무시하고 자신의 의견 관철만을 요구하는 고집스러운 독선이나 강요로 흐를 우려가 큽니다."
     },
     {
       "code": "STR_ZEST",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_OPTIMISM"
+      ],
+      "conflicts_with": [
+        "STR_PRUDENCE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_SELF_REGULATION",
+        "STR_PRUDENCE"
+      ],
       "name": "활력/열정",
       "english_name": "Zest",
       "virtue_name": "활력",
@@ -543,14 +714,21 @@
         "에너지",
         "적극성",
         "생동감"
-      ]
+      ],
+      "overuse": "지나치게 하이텐션을 유지하여 정적이고 차분한 성찰이 필요한 환경에서 산만함을 야기할 수 있습니다."
     },
     {
       "code": "STR_HUMOR",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_SOCIABILITY"
+      ],
+      "conflicts_with": [
+        "STR_PRUDENCE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PRUDENCE"
+      ],
       "name": "유머 감각",
       "english_name": "Humor",
       "virtue_name": "활력",
@@ -562,14 +740,22 @@
         "유쾌함",
         "긴장 완화",
         "해학적 관점"
-      ]
+      ],
+      "overuse": "진지하고 엄숙한 격식이 필요한 상황에서도 가벼운 농담을 던져 분위기를 그르치거나 품위를 해칩니다."
     },
     {
       "code": "PSTR_OPTIMISM",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_ZEST"
+      ],
+      "conflicts_with": [
+        "STR_PRUDENCE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PRUDENCE",
+        "PSTR_ANALYTICAL_THINKING"
+      ],
       "name": "낙관성",
       "english_name": "Optimism",
       "virtue_name": "활력",
@@ -581,14 +767,21 @@
         "출구 탐색",
         "긍정의 에너지",
         "회복 기회"
-      ]
+      ],
+      "overuse": "대책 없는 장밋빛 전망에 기대어 실존하는 중대한 위험이나 구조적 경고 신호를 애써 외면할 우려가 있습니다."
     },
     {
       "code": "PSTR_INITIATIVE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ACTION"
+      ],
+      "conflicts_with": [
+        "STR_HUMILITY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_HUMILITY"
+      ],
       "name": "주도성",
       "english_name": "Initiative",
       "virtue_name": "활력",
@@ -600,14 +793,21 @@
         "자발적 오너십",
         "최초 포화",
         "돌격 선도"
-      ]
+      ],
+      "overuse": "상황에 대한 주도권을 억지로 독점하려 하여 주변 동료들의 팔로워십 의지를 꺾고 피로감을 줍니다."
     },
     {
       "code": "PSTR_FLEXIBILITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ADAPTABILITY"
+      ],
+      "conflicts_with": [
+        "STR_PERSEVERANCE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PERSEVERANCE"
+      ],
       "name": "유연성",
       "english_name": "Flexibility",
       "virtue_name": "활력",
@@ -619,14 +819,21 @@
         "변화 수용",
         "유연한 설계",
         "상황 조율"
-      ]
+      ],
+      "overuse": "일관성 있는 원칙이나 단단한 기준 없이 상황에 따라 너무 쉽게 흔들려 신뢰를 잃을 수 있습니다."
     },
     {
       "code": "PSTR_RESILIENCE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_OPTIMISM"
+      ],
+      "conflicts_with": [
+        "PSTR_EMPATHY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_SELF_AWARENESS"
+      ],
       "name": "회복탄력성",
       "english_name": "Resilience",
       "virtue_name": "활력",
@@ -638,14 +845,21 @@
         "정신적 방어",
         "고난 리프레임",
         "불사조 앵커"
-      ]
+      ],
+      "overuse": "심각한 좌절과 슬픔조차 애써 쿨하게 넘기려 감정을 억압하다 정서적인 병리 현상을 마주할 수 있습니다."
     },
     {
       "code": "PSTR_ADAPTABILITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_FLEXIBILITY"
+      ],
+      "conflicts_with": [
+        "STR_PERSEVERANCE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PERSEVERANCE"
+      ],
       "name": "적응력",
       "english_name": "Adaptability",
       "virtue_name": "활력",
@@ -657,16 +871,21 @@
         "카멜레온 전술",
         "장벽 소거",
         "문화 수용"
-      ]
+      ],
+      "overuse": "외부 환경의 변화에 무조건 영합하여, 정작 주체적인 혁신이나 본인 고유의 고집을 지키지 못합니다."
     },
     {
       "code": "PSTR_ADVENTURE",
-      "synergy_with": [],
+      "synergy_with": [
+        "PSTR_INITIATIVE"
+      ],
       "conflicts_with": [
         "STR_PRUDENCE"
       ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PRUDENCE"
+      ],
       "name": "모험심",
       "english_name": "Adventure",
       "virtue_name": "활력",
@@ -678,14 +897,21 @@
         "안전지대 해제",
         "기꺼운 도험",
         "퍼스트 무버"
-      ]
+      ],
+      "overuse": "스릴과 새로운 자극에 중독되어 현실적인 안전장치나 리스크 한계를 넘어서는 위험한 배팅을 일삼습니다."
     },
     {
       "code": "STR_LOVE_OF_LEARNING",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_CURIOSITY"
+      ],
+      "conflicts_with": [
+        "PSTR_ACTION"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ACTION"
+      ],
       "name": "학습욕",
       "english_name": "Love of Learning",
       "virtue_name": "관점",
@@ -697,14 +923,22 @@
         "역량 개발",
         "지적 성장",
         "자기주도학습"
-      ]
+      ],
+      "overuse": "지식을 탐구하고 습득하는 과정 자체에만 몰두하여 실질적인 실행과 성과 도출을 외면할 위험이 있습니다."
     },
     {
       "code": "STR_CREATIVITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_CURIOSITY"
+      ],
+      "conflicts_with": [
+        "STR_SELF_REGULATION"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PRUDENCE",
+        "PSTR_DETAIL"
+      ],
       "name": "창의성",
       "english_name": "Creativity",
       "virtue_name": "관점",
@@ -716,14 +950,21 @@
         "아이디어 발산",
         "혁신 지향",
         "관점 전환"
-      ]
+      ],
+      "overuse": "기존에 검증되어 작동하고 있는 전통적이고 표준적인 프로토콜마저 부정하여 비효율을 자초합니다."
     },
     {
       "code": "STR_CURIOSITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_LOVE_OF_LEARNING"
+      ],
+      "conflicts_with": [
+        "PSTR_DETAIL"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_SELF_REGULATION"
+      ],
       "name": "호기심",
       "english_name": "Curiosity",
       "virtue_name": "관점",
@@ -735,14 +976,21 @@
         "질문 던지기",
         "개방성",
         "세상 탐험"
-      ]
+      ],
+      "overuse": "업무와 관련 없는 무관한 호기심에 한눈을 팔아 정작 몰입해야 할 일의 마감을 그르치기 쉽습니다."
     },
     {
       "code": "STR_PERSPECTIVE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_STRATEGIC_THINKING"
+      ],
+      "conflicts_with": [
+        "PSTR_DETAIL"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_DETAIL"
+      ],
       "name": "통찰력",
       "english_name": "Perspective",
       "virtue_name": "관점",
@@ -754,14 +1002,21 @@
         "통찰력",
         "현명한 자문",
         "시스템적 사고"
-      ]
+      ],
+      "overuse": "전체적이고 본질적인 흐름만 조망하려다 보니 당장 실행해야 할 구체적인 실무 디테일들을 간과하게 됩니다."
     },
     {
       "code": "STR_APPRECIATION_BEAUTY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_SPIRITUALITY"
+      ],
+      "conflicts_with": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
       "name": "심미안",
       "english_name": "Appreciation of Beauty",
       "virtue_name": "관점",
@@ -773,14 +1028,21 @@
         "경외감",
         "미적 가치",
         "예술적 영감"
-      ]
+      ],
+      "overuse": "지나친 탐미주의적 가치에 경도되어 차갑고 냉혹한 기성 현실 세계에 대한 괴리감과 무력감에 빠집니다."
     },
     {
       "code": "STR_SPIRITUALITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_APPRECIATION_BEAUTY"
+      ],
+      "conflicts_with": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
       "name": "수용/영성",
       "english_name": "Spirituality",
       "virtue_name": "관점",
@@ -792,14 +1054,22 @@
         "의미 추구",
         "초월적 가치",
         "삶의 의미"
-      ]
+      ],
+      "overuse": "현실적 원인 분석이나 합리적인 논증을 건너뛰고 모든 상황을 명리나 영적 운명론으로 해석하려 듭니다."
     },
     {
       "code": "PSTR_ANALYTICAL_THINKING",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_DETAIL"
+      ],
+      "conflicts_with": [
+        "PSTR_OPTIMISM"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_ACTION",
+        "PSTR_OPTIMISM"
+      ],
       "name": "분석력",
       "english_name": "Analytical thinking",
       "virtue_name": "관점",
@@ -810,14 +1080,21 @@
         "인과 추적",
         "데이터 수치 분해",
         "정량 검증"
-      ]
+      ],
+      "overuse": "분석 마비(Analysis Paralysis)에 빠져 모든 데이터가 다 모일 때까지 한 걸음도 전진하지 못합니다."
     },
     {
       "code": "PSTR_OPEN_MINDEDNESS",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_CURIOSITY"
+      ],
+      "conflicts_with": [
+        "PSTR_CRITIQUE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_CRITIQUE"
+      ],
       "name": "개방성",
       "english_name": "Open-mindedness",
       "virtue_name": "관점",
@@ -828,14 +1105,21 @@
         "고정관념 파괴",
         "타자 수용",
         "유연한 지성"
-      ]
+      ],
+      "overuse": "모든 주장과 가치관을 무조건 다 수용하느라 본인만의 확고한 가치 철학이나 주관을 상실하게 됩니다."
     },
     {
       "code": "PSTR_SOLUTION",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
+      "conflicts_with": [
+        "PSTR_HARMONY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_FORGIVENESS"
+      ],
       "name": "문제 해결력",
       "english_name": "Solution",
       "virtue_name": "관점",
@@ -846,14 +1130,22 @@
         "실효 대안 설계",
         "교착 상태 타파",
         "돌판 엔진"
-      ]
+      ],
+      "overuse": "문제 해결 자체에 과집착하여, 당장 해결할 필요가 없는 가벼운 과제들까지 일을 키워 에너지를 낭비합니다."
     },
     {
       "code": "PSTR_CRITIQUE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_ANALYTICAL_THINKING"
+      ],
+      "conflicts_with": [
+        "PSTR_RECOGNITION"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_KINDNESS",
+        "PSTR_RECOGNITION"
+      ],
       "name": "비판적 사고",
       "english_name": "Critique",
       "virtue_name": "관점",
@@ -864,14 +1156,22 @@
         "도약 필터링",
         "허위 수치 색출",
         "검증 비판"
-      ]
+      ],
+      "overuse": "매사 부정적인 트집을 잡거나 냉소적인 비판을 쏟아내어 주변 동료들의 의욕과 동기를 심각하게 훼손합니다."
     },
     {
       "code": "STR_SELF_REGULATION",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_PRUDENCE"
+      ],
+      "conflicts_with": [
+        "STR_ZEST"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_ZEST",
+        "STR_HUMOR"
+      ],
       "name": "자기조절",
       "english_name": "Self-Regulation",
       "virtue_name": "정직",
@@ -883,16 +1183,21 @@
         "감정 억제",
         "루틴 준수",
         "평정심"
-      ]
+      ],
+      "overuse": "자기 감정과 욕구를 한 치의 오차도 없이 통제하려 하여 인간적인 자연스러움과 활력을 완전히 억압합니다."
     },
     {
       "code": "STR_BRAVERY",
       "synergy_with": [
-        "STR_HONESTY"
+        "PSTR_INITIATIVE"
       ],
-      "conflicts_with": [],
+      "conflicts_with": [
+        "STR_PRUDENCE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_PRUDENCE"
+      ],
       "name": "용기",
       "english_name": "Bravery",
       "virtue_name": "정직",
@@ -904,16 +1209,22 @@
         "도전 정신",
         "행동하는 신념",
         "대담함"
-      ]
+      ],
+      "overuse": "자신의 능력을 과신하여 무리하게 위험한 상황에 정면으로 돌진해 만성적인 피해를 자초할 우려가 큽니다."
     },
     {
       "code": "STR_HONESTY",
-      "synergy_with": [],
+      "synergy_with": [
+        "STR_BRAVERY"
+      ],
       "conflicts_with": [
-        "STR_SOCIAL_INTELLIGENCE"
+        "PSTR_DIPLOMACY"
       ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_DIPLOMACY",
+        "STR_SOCIAL_INTELLIGENCE"
+      ],
       "name": "정직/진정성",
       "english_name": "Honesty",
       "virtue_name": "정직",
@@ -925,14 +1236,21 @@
         "진정성",
         "언행일치",
         "책임 오너십"
-      ]
+      ],
+      "overuse": "상대방의 감정 상태나 상황 맥락을 참작하지 않고 지나치게 날 선 진실을 쏟아내어 깊은 상처를 줍니다."
     },
     {
       "code": "STR_GRATITUDE",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_OPTIMISM"
+      ],
+      "conflicts_with": [
+        "PSTR_CRITIQUE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_CRITIQUE"
+      ],
       "name": "감사",
       "english_name": "Gratitude",
       "virtue_name": "정직",
@@ -944,14 +1262,22 @@
         "축복 자각",
         "긍정적 재정의",
         "감사 편지"
-      ]
+      ],
+      "overuse": "부조리하고 억압적인 착취 환경조차도 세상을 향한 과도한 감사 기도로 승화시켜 현실 개선의 동기를 상실합니다."
     },
     {
       "code": "STR_HUMILITY",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "STR_SELF_REGULATION"
+      ],
+      "conflicts_with": [
+        "PSTR_INITIATIVE"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "PSTR_SELF_ESTEEM",
+        "STR_BRAVERY"
+      ],
       "name": "겸손",
       "english_name": "Humility",
       "virtue_name": "정직",
@@ -963,14 +1289,21 @@
         "자기과시 지양",
         "타인 공적 인정",
         "경청"
-      ]
+      ],
+      "overuse": "지나친 자기비하적 겸손으로 일관하여 정당한 본인의 업적과 성과 공로마저 가려버리는 피해를 입게 됩니다."
     },
     {
       "code": "PSTR_SELF_ESTEEM",
-      "synergy_with": [],
-      "conflicts_with": [],
+      "synergy_with": [
+        "PSTR_INITIATIVE"
+      ],
+      "conflicts_with": [
+        "STR_HUMILITY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_HUMILITY"
+      ],
       "name": "자존감",
       "english_name": "Self-esteem",
       "virtue_name": "정직",
@@ -982,16 +1315,21 @@
         "내적 평정",
         "외부 비교 차단",
         "기품"
-      ]
+      ],
+      "overuse": "자신에 대한 자존적 우월감이 도를 넘어 타인의 조언이나 충고를 거만하게 묵살하는 아집으로 고착됩니다."
     },
     {
       "code": "PSTR_SELF_AWARENESS",
       "synergy_with": [
-        "PSTR_IMPROVEMENT"
+        "STR_PERSPECTIVE"
       ],
-      "conflicts_with": [],
+      "conflicts_with": [
+        "PSTR_SOCIABILITY"
+      ],
       "supports": [],
-      "balances": [],
+      "balances": [
+        "STR_SOCIAL_INTELLIGENCE"
+      ],
       "name": "자기인식",
       "english_name": "Self-awareness",
       "virtue_name": "정직",
@@ -1003,7 +1341,8 @@
         "자기 한계 수용",
         "진정성 성찰",
         "내적 거울"
-      ]
+      ],
+      "overuse": "자신의 내부 상태에만 과도하게 성찰 초점을 맞추느라, 정작 외부 환경의 변화나 동향을 감지하지 못합니다."
     }
   ]
 }
