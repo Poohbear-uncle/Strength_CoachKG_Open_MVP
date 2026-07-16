@@ -177,7 +177,7 @@ elif st.session_state.step == 2:
     selected_a_codes = [k for k, v in st.session_state.card_sorting.items() if v == "A"]
     survey_responses = {}
     
-    # [수정안] st.form 블록은 오직 입력용 슬라이더와 전송 버튼 배치까지만 담당합니다.
+    # 폼 블록 선언
     with st.form("verification_form"):
         for code in selected_a_codes:
             s_name = s_map[code]["name"]
@@ -192,26 +192,21 @@ elif st.session_state.step == 2:
             survey_responses[code] = score_val
             st.markdown("<br>", unsafe_allow_html=True)
             
-        # 폼 내부의 최종 서브밋 버튼 정의 (이 아래로는 폼을 닫습니다.)
+        # 폼 전송 버튼
         submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기")
         
     # -------------------------------------------------------------------------
-    # [핵심 수술] 연산, DB 적재, 외부 API 싱크 및 페이지 전환 제어 로직을 
-    # st.form("verification_form") 블록 외부(들여쓰기 밖)로 완벽하게 떼어놓았습니다.
+    # [초안정화 수술] st.status를 완전히 제거하고 st.spinner와 강제 예외 노출 엔진 가동
     # -------------------------------------------------------------------------
     if submit_step2:
-        transition_to_step3 = False
-        
-        # 폼 바깥 주 영역에 독립적인 status 상태 창을 안전하게 렌더링합니다.
-        with st.status("📊 결과를 분석하고 지도를 준비하는 중입니다...", expanded=True) as status:
+        # 화면이 리셋되더라도 에러 추적이 가능하도록 최상위 플래그 설정
+        with st.spinner("📊 결과를 분석하고 지도를 준비하는 중입니다..."):
             try:
                 # 1단계: 강점 가중치 연산 수행
-                status.write("🔢 1. 강점 온톨로지 가중치 합산 연산 중...")
                 raw_results = calculate_scores(st.session_state.card_sorting, survey_responses)
                 st.session_state.results = raw_results
                 
                 # 2단계: SQLite 적재
-                status.write("💾 2. 분석 로그 로컬 SQLite3 DB 적재 중...")
                 save_user_run(
                     st.session_state.browser_session_id, 
                     meta["email"], 
@@ -220,27 +215,20 @@ elif st.session_state.step == 2:
                 )
                 
                 # 3단계: Neo4j AuraDB 싱크
-                status.write("🌐 3. Neo4j AuraDB 클라우드 동기화 중 (예외 우회 대기)...")
                 top_5_for_sync = [
                     {"code": r["code"], "final_score": r["final_score"]} 
                     for r in raw_results if r["group"] == "A"
                 ][:5]
                 sync_to_neo4j_safely(meta["email"], meta["name"], top_5_for_sync)
                 
-                # 모든 로직이 예외 없이 성공적으로 완수되면 플래그 가동
-                status.update(label="✅ 모든 연산 및 저장이 완료되었습니다!", state="complete")
-                transition_to_step3 = True
+                # 비즈니스 로직 성공 시 다이렉트로 화면 전환
+                st.session_state.step = 3
+                st.rerun()
                 
             except Exception as e:
-                # 에러 발생 시 상태를 오류로 바꾼 후 화면에 상세 정보 박스를 고정 출력
-                status.update(label="❌ 처리 과정 중 에러가 발생했습니다.", state="error")
-                st.error(f"📋 상세 에러 메시지: {e}")
-                st.info("💡 'core/assessment.py' 연산 모듈이 정상적으로 호출되었는지 확인해 주십시오.")
-        
-        # 비즈니스 로직 성공 완료가 확인되면, 외부 폼 영향 없이 안전하게 페이지 3단계 리런 실행
-        if transition_to_step3:
-            st.session_state.step = 3
-            st.rerun()
+                # [디버깅 핵심] 어떠한 에러가 나더라도 강제로 화면에 스택 트레이스를 영구 박제합니다.
+                st.error("❌ 분석 처리 중 예외가 발생하여 프로세스가 중단되었습니다.")
+                st.exception(e)  # 이 함수는 에러 내역을 화면에 절대 사라지지 않게 고정합니다.
 
 # -----------------------------------------------------------------------------
 # STEP 3: 동적 결과 분석 리포트 및 시각화 탐색
