@@ -420,16 +420,21 @@ elif st.session_state.step == 3:
     c1, c2 = st.columns(2)
     
     with c1:
-        # PDF 파일 조기 생성
-        pdf_path = generate_pdf_report(st.session_state.browser_session_id, meta, top_5)
-        if os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as pdf_file:
-                st.download_button(
-                    label="📥 소장용 PDF 리포트 파일 다운로드",
-                    data=pdf_file,
-                    file_name=f"CoachKG_Report_{meta['name']}.pdf",
-                    mime="application/pdf"
-                )
+        # [방어 조치 적용] PDF 리포트 생성을 별도 예외 블록으로 완전 격리합니다.
+        # 폰트 다운로드 지연 등의 사유로 다운로드가 지연되더라도 지도가 안 그려지는 현상을 원천 방지합니다.
+        try:
+            pdf_path = generate_pdf_report(st.session_state.browser_session_id, meta, top_5)
+            if os.path.exists(pdf_path):
+                with open(pdf_path, "rb") as pdf_file:
+                    st.download_button(
+                        label="📥 소장용 PDF 리포트 파일 다운로드",
+                        data=pdf_file,
+                        file_name=f"CoachKG_Report_{meta['name']}.pdf",
+                        mime="application/pdf"
+                    )
+        except Exception as pdf_error:
+            st.error("⚠️ PDF 리포트 빌드 중 일시적 네트워크 지연이 관측되었습니다. (왼쪽 지도는 정상 가동 중)")
+            st.caption(f"상세 정보: {pdf_error}")
                 
     with col2:
         if st.button("🔄 새로 진단 시작하기"):
