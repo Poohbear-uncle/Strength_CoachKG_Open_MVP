@@ -26,7 +26,9 @@ def ensure_korean_fonts():
     """
     한글 나눔고딕 폰트 파일이 손상되었거나 없을 경우 구글 저장소에서 다운로드합니다.
     """
+    # 1. 시스템 자체 폰트가 설치되어 있다면 즉시 통과
     if os.path.exists(SYSTEM_FONT_REGULAR) and os.path.exists(SYSTEM_FONT_BOLD):
+        print("[INFO] 리눅스 시스템 폰트(fonts-nanum)가 이미 감지되어 다운로드를 건너뜁니다.")
         return
 
     os.makedirs(FONT_DIR, exist_ok=True)
@@ -38,16 +40,22 @@ def ensure_korean_fonts():
     ]
     
     for path, url in targets:
+        # 파일이 비정상적으로 작다면 손상된 파일로 간주하고 삭제
         if os.path.exists(path) and os.path.getsize(path) < 1000000:
             try:
                 os.remove(path)
-            except:
-                pass
+                print(f"[WARN] 비정상적이거나 손상된 폰트 파일을 감지하여 삭제했습니다: {path}")
+            except Exception as delete_err:
+                print(f"[ERROR] 기존 손상 폰트 제거 실패: {delete_err}")
                 
         if not os.path.exists(path):
             try:
+                print(f"[INFO] 폰트 다운로드 시작: {url} -> {path}")
                 urllib.request.urlretrieve(url, path, timeout=10)
+                print(f"[INFO] 폰트 다운로드 성공: {path} (크기: {os.path.getsize(path)} bytes)")
             except Exception as e:
+                print(f"[ERROR] 폰트 실시간 다운로드 실패: {e}")
+                # 다운로드 도중 깨진 파편 파일이 있다면 정리
                 if os.path.exists(path):
                     try:
                         os.remove(path)
@@ -87,13 +95,18 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     active_regular_path = None
     active_bold_path = None
     
-    # 1. 폰트 위치 스캔 (리눅스 시스템 우선 -> 로컬 다운로드 차선)
+    # 1. 폰트 물리 경로 스캔 및 크기 무결성 검증
     if os.path.exists(SYSTEM_FONT_REGULAR) and os.path.exists(SYSTEM_FONT_BOLD):
         active_regular_path = SYSTEM_FONT_REGULAR
         active_bold_path = SYSTEM_FONT_BOLD
-    elif os.path.exists(FONT_REGULAR_PATH) and os.path.exists(FONT_BOLD_PATH) and os.path.getsize(FONT_REGULAR_PATH) > 1000000:
+        print("[INFO] PDF 렌더링에 리눅스 시스템 패키지 폰트 경로를 사용합니다.")
+    elif (os.path.exists(FONT_REGULAR_PATH) and os.path.exists(FONT_BOLD_PATH) and 
+          os.path.getsize(FONT_REGULAR_PATH) > 1000000 and os.path.getsize(FONT_BOLD_PATH) > 1000000):
         active_regular_path = FONT_REGULAR_PATH
         active_bold_path = FONT_BOLD_PATH
+        print("[INFO] PDF 렌더링에 로컬 레포지토리 커밋 폰트 경로를 사용합니다.")
+    else:
+        print("[WARN] 유효한 한글 나눔고딕 폰트 경로를 확보하지 못했습니다. Helvetica로 폴백합니다.")
 
     # 2. PDF 엔진 기동 및 폰트 최종 등록
     if active_regular_path and active_bold_path:
@@ -103,6 +116,7 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             pdf.add_font("NanumGothic", style="", fname=active_regular_path)
             pdf.add_font("NanumGothic", style="B", fname=active_bold_path)
         except Exception as e:
+            print(f"[ERROR] FPDF add_font 과정에서 실패하여 Helvetica로 최종 전환합니다: {e}")
             font_family = "Helvetica"
             pdf = CoachKGPDF(font_family="Helvetica")
             pdf.set_auto_page_break(auto=True, margin=20)
@@ -300,26 +314,26 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     plt.figure(figsize=(7.5, 6), dpi=300)
     
     # =========================================================================
-    # [Matplotlib 안정성 극대화: 검증된 Bold 폰트를 드로잉 전반에 일괄 적용]
+    # [Matplotlib 폰트 설정 무결성 확보 단계]
     # =========================================================================
-    # Regular 폰트 에러 가능성을 배제하고 타이틀과 노드 모두 NanumGothic-Bold로 렌더링을 일치시킵니다.
+    # Regular 폰트 에러 가능성을 배제하고, 타이틀과 노드 그리기 전반에 걸쳐
+    # 이미 성공적으로 한글 렌더링이 증명된 Bold 폰트 경로(active_bold_path)를 일괄 바인딩합니다.
     matplotlib_font_path = None
-    if os.path.exists(SYSTEM_FONT_BOLD):
-        matplotlib_font_path = SYSTEM_FONT_BOLD
-    elif os.path.exists(FONT_BOLD_PATH) and os.path.getsize(FONT_BOLD_PATH) > 1000000:
-        matplotlib_font_path = FONT_BOLD_PATH
-    elif os.path.exists(SYSTEM_FONT_REGULAR):
-        matplotlib_font_path = SYSTEM_FONT_REGULAR
-    elif os.path.exists(FONT_REGULAR_PATH) and os.path.getsize(FONT_REGULAR_PATH) > 1000000:
-        matplotlib_font_path = FONT_REGULAR_PATH
-        
+    if active_bold_path and os.path.exists(active_bold_path) and os.path.getsize(active_bold_path) > 1000000:
+        matplotlib_font_path = active_bold_path
+    elif active_regular_path and os.path.exists(active_regular_path) and os.path.getsize(active_regular_path) > 1000000:
+        matplotlib_font_path = active_regular_path
+
     if matplotlib_font_path:
-        font_prop_node = fm.FontProperties(fname=matplotlib_font_path, size=8, weight='bold')
-        font_prop_title = fm.FontProperties(fname=matplotlib_font_path, size=11, weight='bold')
+        print(f"[DEBUG_FONT] Matplotlib이 지형도를 그리기 위해 물리 경로를 타겟팅합니다: {matplotlib_font_path}")
+        # 중요: 특정 물리 경로(.ttf) 직접 바인딩 시, 메타데이터 매칭 오류를 원천 차단하기 위해
+        # FontProperties 생성자 내부에는 오직 fname과 size만 단독 전달합니다 (weight, style 매개변수 전면 제거).
+        font_prop_node = fm.FontProperties(fname=matplotlib_font_path, size=8)
+        font_prop_title = fm.FontProperties(fname=matplotlib_font_path, size=11)
     else:
-        # 가상환경 대응용 폴백
-        font_prop_node = fm.FontProperties(family="sans-serif", size=8, weight='bold')
-        font_prop_title = fm.FontProperties(family="sans-serif", size=11, weight='bold')
+        print("[DEBUG_FONT_WARN] Matplotlib용 물리 한글 폰트를 찾지 못했습니다. sans-serif로 대체합니다.")
+        font_prop_node = fm.FontProperties(family="sans-serif", size=8)
+        font_prop_title = fm.FontProperties(family="sans-serif", size=11)
         
     plt.rcParams['axes.unicode_minus'] = False
     
@@ -351,7 +365,7 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             width=1.5
         )
         
-    # 타이틀 드로잉 영역에도 검증 완료된 물리 주소 폰트 객체 적용 (이모지 제거)
+    # 타이틀 드로잉 영역에도 물리 주소 폰트 객체 적용 (이모지 제거)
     plt.title(clean("CoachKG 강점 시너제틱 지형망"), fontproperties=font_prop_title, pad=15)
     plt.axis('off')
     plt.tight_layout()
