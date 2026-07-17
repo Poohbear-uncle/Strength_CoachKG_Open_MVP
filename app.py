@@ -1,5 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import base64
 import uuid
 import os
 import json
@@ -354,23 +355,17 @@ elif st.session_state.step == 3:
         if os.path.exists(html_path):
             try:
                 with open(html_path, 'r', encoding='utf-8') as f:
-                    html_content = f.read()
+                    html_data = f.read()
                 
-                # [초강력 우회 패치] 로컬 스크립트 'lib/bindings/utils.js' 호출 태그를 완전히 제거합니다.
-                html_content = html_content.replace('<script type="text/javascript" src="lib/bindings/utils.js"></script>', '')
-                html_content = html_content.replace("<script type='text/javascript' src='lib/bindings/utils.js'></script>", '')
-                html_content = html_content.replace('<script src="lib/bindings/utils.js"></script>', '')
+                # 1. HTML 소스를 Base64로 인코딩하여 웹 안전 포맷(Data URI)으로 변환
+                b64_html = base64.b64encode(html_data.encode('utf-8')).decode('utf-8')
+                iframe_src = f"data:text/html;base64,{b64_html}"
                 
-                # HTTPS 환경 보안 우회 패치 추가 적용
-                html_content = html_content.replace("http://cdnjs.cloudflare.com", "https://cdnjs.cloudflare.com")
-                html_content = html_content.replace("http://cdn.jsdelivr.net", "https://cdn.jsdelivr.net")
-                html_content = html_content.replace('src="http://', 'src="https://')
-                
-                # 2. 완전히 독립적인 HTML 데이터를 iframe 주입
-                components.html(html_content, height=420, scrolling=True)
+                # 2. 지원이 중단된 st.components.v1.html 대신 st.iframe으로 교체 출력
+                st.iframe(src=iframe_src, height=600)
                 
             except Exception as e:
-                st.error(f"❌ 지도 템플릿을 인라인화하는 과정에서 오류가 발생했습니다: {e}")
+                st.error(f"지도를 화면에 표시하는 과정에서 오류가 발생했습니다: {e}")
         else:
             st.warning(f"⚠️ 임시 지도가 생성되지 않았습니다. (지정 경로: {html_path})")
                 
