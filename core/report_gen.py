@@ -74,11 +74,13 @@ class CoachKGPDF(FPDF):
         self.cell(0, 10, footer_text, align="C")
 
 # [메인 분석 PDF 리포트 파일 생성 엔진]
+# [메인 분석 PDF 리포트 파일 생성 엔진]
 def generate_pdf_report(session_token, user_meta, top_5_results):
     ensure_korean_fonts()
     
     # 폰트 지원 여부 동적 체크 및 가족 선언
     font_family = "NanumGothic"
+    is_korean_supported = True
     
     # 파일 검증 도우미 함수 정의
     def is_valid_font(path):
@@ -94,22 +96,47 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
         try:
             pdf = CoachKGPDF(font_family="NanumGothic")
             pdf.set_auto_page_break(auto=True, margin=20)
-            # fpdf2 보안 강화에 대비하여 명시적으로 fname 키워드 매핑 적용
             pdf.add_font("NanumGothic", style="", fname=FONT_REGULAR_PATH)
             pdf.add_font("NanumGothic", style="B", fname=FONT_BOLD_PATH)
         except Exception as e:
-            # 예외 발생 시 시스템 표준 폰트(Helvetica)로 안전하게 회귀
+            # 예외 발생 시 시스템 표준 폰트(Helvetica)로 전환 및 한글 출력 비활성화
             font_family = "Helvetica"
+            is_korean_supported = False
             pdf = CoachKGPDF(font_family="Helvetica")
             pdf.set_auto_page_break(auto=True, margin=20)
     else:
         # 파일 상태가 올바르지 않으면 아예 add_font 단계를 우회
         font_family = "Helvetica"
+        is_korean_supported = False
         pdf = CoachKGPDF(font_family="Helvetica")
         pdf.set_auto_page_break(auto=True, margin=20)
     
     pdf.add_page()
     
+    # [비상 방어선] 폰트 다운로드 실패로 헬베티카가 강제 지정된 경우
+    if not is_korean_supported:
+        pdf.set_text_color(192, 57, 43)
+        pdf.set_font("Helvetica", "B", 16)
+        pdf.cell(0, 15, "PDF Generation Paused", ln=True, align="L")
+        pdf.ln(5)
+        pdf.set_text_color(80, 80, 80)
+        pdf.set_font("Helvetica", "", 11)
+        error_msg = (
+            "Due to temporary network delay, the Korean font files could not be loaded.\n\n"
+            "Please try downloading the report again in a few moments, or check if "
+            "the font files (NanumGothic.ttf) are committed to your repository."
+        )
+        pdf.multi_cell(0, 6, error_msg)
+        
+        # 안전하게 영문 경고 페이지만 포함된 PDF 빌드 반환
+        output_filename = f"report_{session_token}.pdf"
+        output_pdf_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_filename)
+        pdf.output(output_pdf_path)
+        return output_pdf_path
+
+    # =========================================================================
+    # 정상 실행 경로 (이하 코드는 한글 폰트가 올바르게 확보되었을 때만 수행됨)
+    # =========================================================================
     # 타이틀 출력
     pdf.set_text_color(44, 62, 80)
     pdf.set_font(font_family, "B", 22)
