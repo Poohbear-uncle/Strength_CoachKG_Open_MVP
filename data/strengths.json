@@ -38,7 +38,7 @@
         "PSTR_ACHIEVEMENT_ORIENTED"
       ],
       "conflicts_with": [
-        "PSTR_FLEXIBILITY"
+        "PSTR_ADAPTABILITY"
       ],
       "supports": [],
       "balances": [
@@ -69,7 +69,7 @@
       "supports": [],
       "balances": [
         "PSTR_INITIATIVE",
-        "PSTR_ADVENTURE"
+        "PSTR_ACTION"
       ],
       "name": "신중함",
       "english_name": "Prudence",
@@ -91,7 +91,7 @@
         "PSTR_INITIATIVE"
       ],
       "conflicts_with": [
-        "STR_PRUDENCE"
+        "PSTR_DETAIL"
       ],
       "supports": [],
       "balances": [
@@ -293,7 +293,7 @@
         "카이젠",
         "지속 성장"
       ],
-      "overuse": "지속적인 개선과 완벽주의에만 집착하여 현재의 성과에 만족하지 못하고 끊임없는 불안감을 느낍니다."
+      "overuse": "지속적인 개선과 완벽주의에만 집착하여 현재의 성과에 만족하지 못하고 끊임없는 불안감을 느킵니다."
     },
     {
       "code": "PSTR_COMPETITION",
@@ -386,7 +386,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_HUMILITY"
+        "STR_TEAMWORK"
       ],
       "name": "리더십",
       "english_name": "Leadership",
@@ -412,8 +412,7 @@
       ],
       "supports": [],
       "balances": [
-        "PSTR_EMPATHY",
-        "STR_FORGIVENESS"
+        "PSTR_EMPATHY"
       ],
       "name": "공정함",
       "english_name": "Fairness",
@@ -465,7 +464,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_HONESTY"
+        "STR_SELF_REGULATION"
       ],
       "name": "사회적 지능",
       "english_name": "Social Intelligence",
@@ -543,7 +542,7 @@
       ],
       "supports": [],
       "balances": [
-        "PSTR_PERSUASION"
+        "PSTR_COMMUNICATION"
       ],
       "name": "경청",
       "english_name": "Active listening",
@@ -557,7 +556,7 @@
         "메시지 정독",
         "수용의 눈빛"
       ],
-      "overuse": "수용과 경청에만 집중하여 정작 본인의 확고한 입장이나 필요한 주장을 확실히 관철하지 못합니다."
+      "overuse": "수용 and 경청에만 집중하여 정작 본인의 확고한 입장이나 필요한 주장을 확실히 관철하지 못합니다."
     },
     {
       "code": "PSTR_DIPLOMACY",
@@ -569,7 +568,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_HONESTY"
+        "STR_FAIRNESS"
       ],
       "name": "외교적 수완",
       "english_name": "Diplomacy",
@@ -595,7 +594,7 @@
       ],
       "supports": [],
       "balances": [
-        "PSTR_CRITIQUE"
+        "PSTR_DETAIL"
       ],
       "name": "인정/격려",
       "english_name": "Recognition",
@@ -621,8 +620,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_BRAVERY",
-        "PSTR_INITIATIVE"
+        "STR_BRAVERY"
       ],
       "name": "조화",
       "english_name": "Harmony",
@@ -648,7 +646,7 @@
       ],
       "supports": [],
       "balances": [
-        "PSTR_ACTIVE_LISTENING"
+        "STR_SELF_REGULATION"
       ],
       "name": "소통 능력",
       "english_name": "Communication",
@@ -674,7 +672,7 @@
       ],
       "supports": [],
       "balances": [
-        "PSTR_ACTIVE_LISTENING"
+        "STR_SOCIAL_INTELLIGENCE"
       ],
       "name": "설득력",
       "english_name": "Persuasion",
@@ -700,8 +698,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_SELF_REGULATION",
-        "STR_PRUDENCE"
+        "STR_SELF_REGULATION"
       ],
       "name": "활력/열정",
       "english_name": "Zest",
@@ -727,7 +724,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_PRUDENCE"
+        "PSTR_DETAIL"
       ],
       "name": "유머 감각",
       "english_name": "Humor",
@@ -753,7 +750,6 @@
       ],
       "supports": [],
       "balances": [
-        "STR_PRUDENCE",
         "PSTR_ANALYTICAL_THINKING"
       ],
       "name": "낙관성",
@@ -780,7 +776,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_HUMILITY"
+        "STR_TEAMWORK"
       ],
       "name": "주도성",
       "english_name": "Initiative",
@@ -806,7 +802,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_PERSEVERANCE"
+        "STR_SELF_REGULATION"
       ],
       "name": "유연성",
       "english_name": "Flexibility",
@@ -858,7 +854,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_PERSEVERANCE"
+        "PSTR_TIME_OPTIMIZATION"
       ],
       "name": "적응력",
       "english_name": "Adaptability",
@@ -884,7 +880,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_PRUDENCE"
+        "STR_SELF_REGULATION"
       ],
       "name": "모험심",
       "english_name": "Adventure",
@@ -910,7 +906,7 @@
       ],
       "supports": [],
       "balances": [
-        "PSTR_ACTION"
+        "PSTR_TIME_OPTIMIZATION"
       ],
       "name": "학습욕",
       "english_name": "Love of Learning",
@@ -1196,7 +1192,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_PRUDENCE"
+        "STR_SELF_REGULATION"
       ],
       "name": "용기",
       "english_name": "Bravery",
@@ -1222,7 +1218,6 @@
       ],
       "supports": [],
       "balances": [
-        "PSTR_DIPLOMACY",
         "STR_SOCIAL_INTELLIGENCE"
       ],
       "name": "정직/진정성",
@@ -1263,7 +1258,7 @@
         "긍정적 재정의",
         "감사 편지"
       ],
-      "overuse": "부조리하고 억압적인 착취 환경조차도 세상을 향한 과도한 감사 기도로 승화시켜 현실 개선의 동기를 상실합니다."
+      "overuse": "부조리하고 억압적인 착취 환경조차도 세상을 향한 과도한 감사 기드로 승화시켜 현실 개선의 동기를 상실합니다."
     },
     {
       "code": "STR_HUMILITY",
@@ -1302,7 +1297,7 @@
       ],
       "supports": [],
       "balances": [
-        "STR_HUMILITY"
+        "STR_GRATITUDE"
       ],
       "name": "자존감",
       "english_name": "Self-esteem",

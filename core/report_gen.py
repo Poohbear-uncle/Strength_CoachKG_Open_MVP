@@ -7,6 +7,7 @@ from fpdf import FPDF
 import matplotlib
 matplotlib.use('Agg')  # 가상 GUI 서버가 없는 서버용 논-인터랙티브 백엔드 강제 설정
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm  # Matplotlib 폰트 등록용
 import networkx as nx
 
 # 폰트 탐색 경로 정의
@@ -15,18 +16,16 @@ project_root = os.path.dirname(script_dir)
 
 FONT_DIR = os.path.join(project_root, "data", "fonts")
 FONT_REGULAR_PATH = os.path.join(FONT_DIR, "NanumGothic.ttf")
-FONT_BOLD_PATH = os.path.join(FONT_DIR, "NanumGothic-Bold.ttf") # <-- 하이픈(-) 추가하여 일치시킴
+FONT_BOLD_PATH = os.path.join(FONT_DIR, "NanumGothic-Bold.ttf")
 
 # Linux OS 패키지(packages.txt) 설치 시 매핑되는 시스템 기본 경로
 SYSTEM_FONT_REGULAR = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-SYSTEM_FONT_BOLD = "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"
+SYSTEM_FONT_BOLD = "/usr/share/fonts/truetype/nanum/NanumGothic-Bold.ttf"
 
 def ensure_korean_fonts():
     """
     한글 나눔고딕 폰트 파일이 손상되었거나 없을 경우 구글 저장소에서 다운로드합니다.
-    (단, packages.txt를 통해 리눅스 서버 자체에 설치된 경우 이 단계를 건너뜁니다)
     """
-    # 시스템 폰트가 이미 존재한다면 다운로드를 건너뜀
     if os.path.exists(SYSTEM_FONT_REGULAR) and os.path.exists(SYSTEM_FONT_BOLD):
         return
 
@@ -62,7 +61,6 @@ class CoachKGPDF(FPDF):
         self.custom_font_family = font_family
 
     def header(self):
-        # 헬베티카 상태라면 한글 타이틀이 아닌 영문 대체 타이틀 인쇄로 충돌 방지
         title_text = "CoachKG Strength Navigator - Personal Report" if self.custom_font_family == "Helvetica" else "CoachKG 강점 동적 내비게이터 - 개인 분석 리포트"
         self.set_font(self.custom_font_family, "", 8.5)
         self.set_text_color(150, 150, 150)
@@ -113,10 +111,9 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
         pdf = CoachKGPDF(font_family="Helvetica")
         pdf.set_auto_page_break(auto=True, margin=20)
         
-    # [비상 안전 정수기] 헬베티카인 경우 한글 인쇄 시 에러를 방지하기 위해 한글을 "?" 혹은 공백으로 걸러내는 클리너 함수
+    # 헬베티카 상태라면 안전하게 영문 경고 페이지로 우회하여 충돌 방지
     def clean(text):
         if font_family == "Helvetica":
-            # 한글 및 유니코드 비영어권 캐릭터를 모두 "?" 로 안전 전환하여 ValueError 원천 봉쇄
             return "".join(c if ord(c) < 128 else "?" for c in str(text))
         return str(text)
     
@@ -129,18 +126,18 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     pdf.ln(2)
     
     # 기본 정보 상자 렌더링
-    pdf.set_font(font_family, "", 10)
+    pdf.set_font(font_family, "", 10.5)
     pdf.set_text_color(80, 80, 80)
     today_str = datetime.now().strftime("%Y-%m-%d %H:%M")
     
-    pdf.cell(0, 6, clean(f"User Name : {user_meta.get('name', 'N/A')}"), ln=True)
-    pdf.cell(0, 6, clean(f"Email : {user_meta.get('email', 'N/A')}"), ln=True)
-    pdf.cell(0, 6, clean(f"Date : {today_str}"), ln=True)
+    pdf.cell(0, 6, clean(f"피진단자 성함 : {user_meta.get('name', '미기재')} 님"), ln=True)
+    pdf.cell(0, 6, clean(f"이메일 계정 : {user_meta.get('email', '미기재')}"), ln=True)
+    pdf.cell(0, 6, clean(f"진단 시각 : {today_str}"), ln=True)
     pdf.ln(8)
     
     # 안내 메시지
     pdf.set_fill_color(245, 247, 250)
-    pdf.set_font(font_family, "", 9.5)
+    pdf.set_font(font_family, "", 10)
     pdf.set_text_color(50, 50, 50)
     info_text = (
         "This is a digital report based on your top 5 core strengths. Please use this to reflect on your potentials."
@@ -162,80 +159,84 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             pdf.add_page()
             pdf.set_font(font_family, "B", 9)
             pdf.set_text_color(150, 150, 150)
-            pdf.cell(0, 6, clean("CoachKG Strength Report (Continued)"), ln=True, align="R")
+            pdf.cell(0, 6, clean("CoachKG 강점 분석 리포트 (이어서 계속)"), ln=True, align="R")
             pdf.set_draw_color(220, 224, 230)
             pdf.line(10, pdf.get_y(), 200, pdf.get_y())
             pdf.ln(6)
             
         pdf.set_fill_color(230, 240, 250)
-        pdf.set_font(font_family, "B", 11)
+        pdf.set_font(font_family, "B", 12)  # 제목 폰트 크기 상향
         pdf.set_text_color(41, 128, 185)
         
-        header_text = f"  [{idx}]  {r['name']}  (Score: {r['final_score']} / 5.0)   | Virtue: {r['virtue']}"
-        pdf.cell(0, 8, clean(header_text), ln=True, fill=True)
-        pdf.ln(1)
+        header_text = f"  [{idx}순위]  {r['name']}  (평점: {r['final_score']} / 5.0)   | 소속 덕목: {r['virtue']}"
+        pdf.cell(0, 9, clean(header_text), ln=True, fill=True)
+        pdf.ln(2)
         
-        pdf.set_font(font_family, "B", 9)
+        pdf.set_font(font_family, "B", 10.5)  # 소제목 폰트 크기 상향
         pdf.set_text_color(50, 50, 50)
-        pdf.cell(0, 5, clean("💡 Summary"), ln=True)
-        
-        pdf.set_font(font_family, "", 9)
-        pdf.set_text_color(80, 80, 80)
-        summary_text = r.get("summary", "No details provided.")
-        pdf.multi_cell(0, 5, clean(summary_text))
+        pdf.cell(0, 5, clean("💬 핵심 요약 및 정의"), ln=True)
         pdf.ln(1)
+        
+        pdf.set_font(font_family, "", 10)  # 내용 본문 크기 상향
+        pdf.set_text_color(80, 80, 80)
+        summary_text = r.get("summary", "상세 요약 설명이 포함되지 않은 강점입니다.")
+        pdf.multi_cell(0, 5.5, clean(summary_text))
+        pdf.ln(2)
         
         s_detail = s_map.get(r.get("code"), {}) if r.get("code") else {}
-        overuse_text = s_detail.get("overuse", "Be cautious of burnout or overuse shadows.")
+        overuse_text = s_detail.get("overuse", "과사용 시 주변과의 불협화음 혹은 번아웃을 유발할 우려가 있으니 성찰해 보시기 바랍니다.")
         
         synergy_list = [s_map[s_code]["name"] for s_code in s_detail.get("synergy_with", []) if s_code in s_map]
         balances_list = [s_map[b_code]["name"] for b_code in s_detail.get("balances", []) if b_code in s_map]
         conflicts_list = [s_map[c_code]["name"] for c_code in s_detail.get("conflicts_with", []) if c_code in s_map]
         
-        pdf.set_font(font_family, "B", 9)
+        pdf.set_font(font_family, "B", 10.5)
         pdf.set_text_color(192, 57, 43)
-        pdf.cell(0, 5, clean("⚠️ Overuse Risks"), ln=True)
-        
-        pdf.set_font(font_family, "", 9)
-        pdf.set_text_color(80, 80, 80)
-        pdf.multi_cell(0, 5, clean(overuse_text))
+        pdf.cell(0, 5, clean("⚠️ 과사용(Overuse) 위험성과 그림자"), ln=True)
         pdf.ln(1)
+        
+        pdf.set_font(font_family, "", 10)
+        pdf.set_text_color(80, 80, 80)
+        pdf.multi_cell(0, 5.5, clean(overuse_text))
+        pdf.ln(2)
         
         relations_text_parts = []
         if synergy_list:
-            relations_text_parts.append(f"Synergy: {', '.join(synergy_list)}")
+            relations_text_parts.append(f"🤝 시너지: {', '.join(synergy_list)}")
         if balances_list:
-            relations_text_parts.append(f"Balance: {', '.join(balances_list)}")
+            relations_text_parts.append(f"⚖️ 보완균형: {', '.join(balances_list)}")
         if conflicts_list:
-            relations_text_parts.append(f"Conflicts: {', '.join(conflicts_list)}")
+            relations_text_parts.append(f"⚡ 주의상충: {', '.join(conflicts_list)}")
             
         if relations_text_parts:
-            pdf.set_font(font_family, "B", 9)
+            pdf.set_font(font_family, "B", 10.5)
             pdf.set_text_color(39, 174, 96)
-            pdf.cell(0, 5, clean("🔗 Relations Network Dynamics"), ln=True)
+            pdf.cell(0, 5, clean("🔗 유기적 지식 관계망 역동성"), ln=True)
+            pdf.ln(1)
             
-            pdf.set_font(font_family, "", 8.5)
+            pdf.set_font(font_family, "", 9.5)
             pdf.set_text_color(100, 100, 100)
             relation_str = "  |  ".join(relations_text_parts)
             pdf.cell(0, 5, clean(f"  {relation_str}"), ln=True)
-            pdf.ln(1)
+            pdf.ln(2)
         
         keywords = r.get("keywords", [])
         if keywords:
-            pdf.set_font(font_family, "B", 9)
+            pdf.set_font(font_family, "B", 10.5)
             pdf.set_text_color(50, 50, 50)
-            pdf.cell(0, 5, clean("🏷️ Keywords"), ln=True)
+            pdf.cell(0, 5, clean("🏷️ 연관 키워드"), ln=True)
+            pdf.ln(1)
             
-            pdf.set_font(font_family, "", 8.5)
+            pdf.set_font(font_family, "", 9.5)
             pdf.set_text_color(100, 100, 100)
             keyword_str = ", ".join(keywords)
             pdf.cell(0, 5, clean(f"  {keyword_str}"), ln=True)
             
-        pdf.ln(4)
+        pdf.ln(6)
         
     # NetworkX 기반 정적 지도 생성 및 인쇄
     pdf.add_page()
-    pdf.set_font(font_family, "B", 14)
+    pdf.set_font(font_family, "B", 15)
     pdf.set_text_color(44, 62, 80)
     pdf.cell(0, 10, clean("🌌 나의 5대 지능형 강점 네트워크 지형도"), ln=True, align="L")
     pdf.ln(5)
@@ -297,13 +298,21 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     styles = [edge[2].get('style', 'solid') for edge in edges]
     
     plt.figure(figsize=(7.5, 6), dpi=300)
-    plt.rcParams['font.family'] = 'NanumGothic' if font_family == "NanumGothic" else 'sans-serif'
+    
+    # =========================================================================
+    # [Matplotlib 폰트 엔진에 한글 물리 폰트 강제 주입 및 캐시 등록]
+    # =========================================================================
+    if active_regular_path and os.path.exists(active_regular_path):
+        fm.fontManager.addfont(active_regular_path)
+        plt.rcParams['font.family'] = 'NanumGothic'
+    else:
+        plt.rcParams['font.family'] = 'sans-serif'
+        
     plt.rcParams['axes.unicode_minus'] = False
     
     pos = nx.spring_layout(G, k=0.8, iterations=50)
     
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=800)
-    # 한글 깨짐 방지 레이블 필터링
     clean_labels = {k: clean(v) for k, v in node_labels.items()}
     nx.draw_networkx_labels(G, pos, labels=clean_labels, font_size=8, font_weight='bold')
     
