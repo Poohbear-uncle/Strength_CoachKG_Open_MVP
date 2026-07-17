@@ -7,7 +7,7 @@ from fpdf import FPDF
 import matplotlib
 matplotlib.use('Agg')  # 가상 GUI 서버가 없는 서버용 논-인터랙티브 백엔드 강제 설정
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm  # Matplotlib 폰트 등록용
+import matplotlib.font_manager as fm  # Matplotlib 폰트 직접 지정을 위해 주입
 import networkx as nx
 
 # 폰트 탐색 경로 정의
@@ -300,21 +300,26 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     plt.figure(figsize=(7.5, 6), dpi=300)
     
     # =========================================================================
-    # [Matplotlib 폰트 엔진에 한글 물리 폰트 강제 주입 및 캐시 등록]
+    # [가장 안전한 물리 폰트 경로 객체 맵핑 생성]
     # =========================================================================
     if active_regular_path and os.path.exists(active_regular_path):
-        fm.fontManager.addfont(active_regular_path)
-        plt.rcParams['font.family'] = 'NanumGothic'
+        # 폰트 패밀리명 불일치 문제를 해결하기 위해 물리 주소를 가진 객체를 직접 생성
+        font_prop_node = fm.FontProperties(fname=active_regular_path, size=8, weight='bold')
+        font_prop_title = fm.FontProperties(fname=active_bold_path if active_bold_path else active_regular_path, size=11, weight='bold')
     else:
-        plt.rcParams['font.family'] = 'sans-serif'
+        # 비상시 기본 폰트 처리
+        font_prop_node = fm.FontProperties(family="sans-serif", size=8, weight='bold')
+        font_prop_title = fm.FontProperties(family="sans-serif", size=11, weight='bold')
         
     plt.rcParams['axes.unicode_minus'] = False
     
     pos = nx.spring_layout(G, k=0.8, iterations=50)
     
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=800)
+    
     clean_labels = {k: clean(v) for k, v in node_labels.items()}
-    nx.draw_networkx_labels(G, pos, labels=clean_labels, font_size=8, font_weight='bold')
+    # 폰트 검색 과정을 거치지 않고, 수집된 물리 주소 객체(fontproperties)를 레이블에 직접 주입
+    nx.draw_networkx_labels(G, pos, labels=clean_labels, fontproperties=font_prop_node)
     
     for edge, color, style in zip(edges, colors, styles):
         nx.draw_networkx_edges(
@@ -325,7 +330,8 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             width=1.5
         )
         
-    plt.title(clean("🧭 CoachKG 강점 시너제틱 지형망"), fontsize=11, fontweight='bold', pad=15)
+    # 타이틀 드로잉 영역에도 물리 주소 폰트 객체(fontproperties) 직접 적용
+    plt.title(clean("🧭 CoachKG 강점 시너제틱 지형망"), fontproperties=font_prop_title, pad=15)
     plt.axis('off')
     plt.tight_layout()
     
