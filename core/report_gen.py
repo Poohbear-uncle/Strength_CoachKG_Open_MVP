@@ -31,7 +31,7 @@ def ensure_korean_fonts():
     ]
     
     for path, url in targets:
-        # 파일이 1MB 이하인 불완전 다운로드 상태라면 삭제 처리
+        # 파일이 1MB 이하인 불완전 다운로드 상태라면 사전 삭제 처리
         if os.path.exists(path) and os.path.getsize(path) < 1000000:
             try:
                 os.remove(path)
@@ -42,7 +42,12 @@ def ensure_korean_fonts():
             try:
                 urllib.request.urlretrieve(url, path, timeout=10)
             except Exception as e:
-                pass
+                # 다운로드 도중 실패 시, 불완전하게 쓰인 파일이 있다면 정리
+                if os.path.exists(path):
+                    try:
+                        os.remove(path)
+                    except:
+                        pass
 
 # [CoachKG 전용 PDF 커스텀 헤더/푸터 드로잉 클래스]
 class CoachKGPDF(FPDF):
@@ -75,20 +80,30 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     # 폰트 지원 여부 동적 체크 및 가족 선언
     font_family = "NanumGothic"
     
-    # 나눔고딕 폰트 파일의 무결성이 확인되었을 때만 안전하게 add_font()를 가동합니다.
-    if os.path.exists(FONT_REGULAR_PATH) and os.path.exists(FONT_BOLD_PATH) and os.path.getsize(FONT_REGULAR_PATH) > 1000000:
+    # 파일 검증 도우미 함수 정의
+    def is_valid_font(path):
+        return (
+            path 
+            and os.path.exists(path) 
+            and os.path.getsize(path) > 1000000 
+            and path.lower().endswith(('.ttf', '.otf'))
+        )
+    
+    # 두 폰트 파일 모두 유효하며 실존하는 경우에만 사용 시도
+    if is_valid_font(FONT_REGULAR_PATH) and is_valid_font(FONT_BOLD_PATH):
         try:
             pdf = CoachKGPDF(font_family="NanumGothic")
             pdf.set_auto_page_break(auto=True, margin=20)
-            pdf.add_font("NanumGothic", "", FONT_REGULAR_PATH)
-            pdf.add_font("NanumGothic", "B", FONT_BOLD_PATH)
+            # fpdf2 보안 강화에 대비하여 명시적으로 fname 키워드 매핑 적용
+            pdf.add_font("NanumGothic", style="", fname=FONT_REGULAR_PATH)
+            pdf.add_font("NanumGothic", style="B", fname=FONT_BOLD_PATH)
         except Exception as e:
-            # 예상치 못한 폰트 등록 실패 시 헬베티카(add_font 불필요)로 다이렉트 긴급 전환
+            # 예외 발생 시 시스템 표준 폰트(Helvetica)로 안전하게 회귀
             font_family = "Helvetica"
             pdf = CoachKGPDF(font_family="Helvetica")
             pdf.set_auto_page_break(auto=True, margin=20)
     else:
-        # 파일이 깨졌거나 존재하지 않을 경우 시스템 표준 폰트 지정 (add_font를 완전히 우회하여 확장자 에러 원천 차단)
+        # 파일 상태가 올바르지 않으면 아예 add_font 단계를 우회
         font_family = "Helvetica"
         pdf = CoachKGPDF(font_family="Helvetica")
         pdf.set_auto_page_break(auto=True, margin=20)
