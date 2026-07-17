@@ -48,69 +48,69 @@ st.title("🧭 동적 강점 내비게이터")
 st.caption("비회원 개방형 - 3단계 하이브리드 강점 가치 지도 진단 서비스")
 st.markdown("---")
 
-# =============================================================================
-# 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드 - 영구 고정형]
-# =============================================================================
-with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
-    st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
-    db_col1, db_col2, db_col3 = st.columns(3)
-    with db_col1:
-        st.metric("현재 진행 단계 (Step)", st.session_state.step)
-    with db_col2:
-        st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
-    with db_col3:
-        st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
+# # =============================================================================
+# # 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드 - 영구 고정형]
+# # =============================================================================
+# with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
+#     st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
+#     db_col1, db_col2, db_col3 = st.columns(3)
+#     with db_col1:
+#         st.metric("현재 진행 단계 (Step)", st.session_state.step)
+#     with db_col2:
+#         st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
+#     with db_col3:
+#         st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
         
-    st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
-    if st.session_state.card_sorting:
-        a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
-        b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
-        c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
+#     st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
+#     if st.session_state.card_sorting:
+#         a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
+#         b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
+#         c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
         
-        if a_cnt == 0:
-            st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
-        else:
-            st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
-    else:
-        st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
+#         if a_cnt == 0:
+#             st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
+#         else:
+#             st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
+#     else:
+#         st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
         
-    st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
-    # [수정] 체크 상태를 전역 세션 상태값에 바로 대입하여 영구 보존
-    st.session_state.bypass_db = st.checkbox(
-        "⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", 
-        value=st.session_state.bypass_db
-    )    
-    btn_col1, btn_col2, btn_col3 = st.columns(3)
-    with btn_col1:
-        if st.button("🔄 강제 Step 1로 리셋"):
-            st.session_state.step = 1
-            st.session_state.card_sorting = {}
-            st.session_state.results = []
-            st.session_state.user_meta = {}
-            st.rerun()
-    with btn_col2:
-        if st.button("⚠️ 강제 Step 2로 점프"):
-            st.session_state.step = 2
-            st.rerun()
-    with btn_col3:
-        if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
-            st.session_state.step = 3
-            st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
-            ontology = load_ontology()
-            dummy_results = []
-            for s in ontology["strengths"][:5]:
-                dummy_results.append({
-                    "code": s["code"],
-                    "name": s["name"],
-                    "virtue": s.get("virtue_name", "덕목군"),
-                    "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
-                    "group": "A",
-                    "final_score": 4.8,
-                    "summary": s.get("summary", "테스트용 설명문구입니다."),
-                    "keywords": s.get("keywords", ["키워드1", "키워드2"])
-                })
-            st.session_state.results = dummy_results
-            st.rerun()
+#     st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
+#     # [수정] 체크 상태를 전역 세션 상태값에 바로 대입하여 영구 보존
+#     st.session_state.bypass_db = st.checkbox(
+#         "⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", 
+#         value=st.session_state.bypass_db
+#     )    
+#     btn_col1, btn_col2, btn_col3 = st.columns(3)
+#     with btn_col1:
+#         if st.button("🔄 강제 Step 1로 리셋"):
+#             st.session_state.step = 1
+#             st.session_state.card_sorting = {}
+#             st.session_state.results = []
+#             st.session_state.user_meta = {}
+#             st.rerun()
+#     with btn_col2:
+#         if st.button("⚠️ 강제 Step 2로 점프"):
+#             st.session_state.step = 2
+#             st.rerun()
+#     with btn_col3:
+#         if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
+#             st.session_state.step = 3
+#             st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
+#             ontology = load_ontology()
+#             dummy_results = []
+#             for s in ontology["strengths"][:5]:
+#                 dummy_results.append({
+#                     "code": s["code"],
+#                     "name": s["name"],
+#                     "virtue": s.get("virtue_name", "덕목군"),
+#                     "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
+#                     "group": "A",
+#                     "final_score": 4.8,
+#                     "summary": s.get("summary", "테스트용 설명문구입니다."),
+#                     "keywords": s.get("keywords", ["키워드1", "키워드2"])
+#                 })
+#             st.session_state.results = dummy_results
+#             st.rerun()
             
 st.markdown("---")
 
@@ -431,7 +431,7 @@ elif st.session_state.step == 3:
             st.error("⚠️ PDF 리포트 빌드 중 일시적 네트워크 지연이 관측되었습니다. (왼쪽 지도는 정상 가동 중)")
             st.caption(f"상세 정보: {pdf_error}")
                 
-    with col2:
+    with c2:
         if st.button("🔄 새로 진단 시작하기"):
             # 세션 변수 올인원 포맷 리셋
             st.session_state.step = 1
