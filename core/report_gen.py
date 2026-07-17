@@ -300,14 +300,25 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     plt.figure(figsize=(7.5, 6), dpi=300)
     
     # =========================================================================
-    # [가장 안전한 물리 폰트 경로 객체 맵핑 생성]
+    # [Matplotlib 안정성 극대화: 검증된 Bold 폰트를 드로잉 전반에 일괄 적용]
     # =========================================================================
-    if active_regular_path and os.path.exists(active_regular_path):
-        font_prop_node = fm.FontProperties(fname=active_regular_path, size=8)
-        font_prop_title = fm.FontProperties(fname=active_bold_path if active_bold_path else active_regular_path, size=11, weight='bold')
+    # Regular 폰트 에러 가능성을 배제하고 타이틀과 노드 모두 NanumGothic-Bold로 렌더링을 일치시킵니다.
+    matplotlib_font_path = None
+    if os.path.exists(SYSTEM_FONT_BOLD):
+        matplotlib_font_path = SYSTEM_FONT_BOLD
+    elif os.path.exists(FONT_BOLD_PATH) and os.path.getsize(FONT_BOLD_PATH) > 1000000:
+        matplotlib_font_path = FONT_BOLD_PATH
+    elif os.path.exists(SYSTEM_FONT_REGULAR):
+        matplotlib_font_path = SYSTEM_FONT_REGULAR
+    elif os.path.exists(FONT_REGULAR_PATH) and os.path.getsize(FONT_REGULAR_PATH) > 1000000:
+        matplotlib_font_path = FONT_REGULAR_PATH
+        
+    if matplotlib_font_path:
+        font_prop_node = fm.FontProperties(fname=matplotlib_font_path, size=8, weight='bold')
+        font_prop_title = fm.FontProperties(fname=matplotlib_font_path, size=11, weight='bold')
     else:
-        # 비상시 기본 폰트 처리
-        font_prop_node = fm.FontProperties(family="sans-serif", size=8)
+        # 가상환경 대응용 폴백
+        font_prop_node = fm.FontProperties(family="sans-serif", size=8, weight='bold')
         font_prop_title = fm.FontProperties(family="sans-serif", size=11, weight='bold')
         
     plt.rcParams['axes.unicode_minus'] = False
@@ -340,7 +351,7 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             width=1.5
         )
         
-    # 타이틀 드로잉 영역에도 물리 주소 폰트 객체(fontproperties) 직접 적용 (에러 방지를 위해 이모지 제거)
+    # 타이틀 드로잉 영역에도 검증 완료된 물리 주소 폰트 객체 적용 (이모지 제거)
     plt.title(clean("CoachKG 강점 시너제틱 지형망"), fontproperties=font_prop_title, pad=15)
     plt.axis('off')
     plt.tight_layout()
