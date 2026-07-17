@@ -238,7 +238,7 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     pdf.add_page()
     pdf.set_font(font_family, "B", 15)
     pdf.set_text_color(44, 62, 80)
-    pdf.cell(0, 10, clean("🌌 나의 5대 지능형 강점 네트워크 지형도"), ln=True, align="L")
+    pdf.cell(0, 10, clean("나의 5대 지능형 강점 네트워크 지형도"), ln=True, align="L")
     pdf.ln(5)
     
     G = nx.Graph()
@@ -303,12 +303,11 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     # [가장 안전한 물리 폰트 경로 객체 맵핑 생성]
     # =========================================================================
     if active_regular_path and os.path.exists(active_regular_path):
-        # 폰트 패밀리명 불일치 문제를 해결하기 위해 물리 주소를 가진 객체를 직접 생성
-        font_prop_node = fm.FontProperties(fname=active_regular_path, size=8, weight='bold')
+        font_prop_node = fm.FontProperties(fname=active_regular_path, size=8)
         font_prop_title = fm.FontProperties(fname=active_bold_path if active_bold_path else active_regular_path, size=11, weight='bold')
     else:
         # 비상시 기본 폰트 처리
-        font_prop_node = fm.FontProperties(family="sans-serif", size=8, weight='bold')
+        font_prop_node = fm.FontProperties(family="sans-serif", size=8)
         font_prop_title = fm.FontProperties(family="sans-serif", size=11, weight='bold')
         
     plt.rcParams['axes.unicode_minus'] = False
@@ -317,9 +316,20 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=800)
     
+    # =========================================================================
+    # [NetworkX 내부 폰트 덮어쓰기 우회 - Matplotlib 순수 텍스트 레이아웃 배치]
+    # =========================================================================
     clean_labels = {k: clean(v) for k, v in node_labels.items()}
-    # 폰트 검색 과정을 거치지 않고, 수집된 물리 주소 객체(fontproperties)를 레이블에 직접 주입
-    nx.draw_networkx_labels(G, pos, labels=clean_labels, fontproperties=font_prop_node)
+    for node, (x, y) in pos.items():
+        if node in clean_labels:
+            plt.text(
+                x, y, 
+                clean_labels[node], 
+                fontproperties=font_prop_node, 
+                ha='center', 
+                va='center',
+                zorder=10
+            )
     
     for edge, color, style in zip(edges, colors, styles):
         nx.draw_networkx_edges(
@@ -330,8 +340,8 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
             width=1.5
         )
         
-    # 타이틀 드로잉 영역에도 물리 주소 폰트 객체(fontproperties) 직접 적용
-    plt.title(clean("🧭 CoachKG 강점 시너제틱 지형망"), fontproperties=font_prop_title, pad=15)
+    # 타이틀 드로잉 영역에도 물리 주소 폰트 객체(fontproperties) 직접 적용 (에러 방지를 위해 이모지 제거)
+    plt.title(clean("CoachKG 강점 시너제틱 지형망"), fontproperties=font_prop_title, pad=15)
     plt.axis('off')
     plt.tight_layout()
     
