@@ -256,7 +256,7 @@ elif st.session_state.step == 2:
             survey_responses[code] = score_val
             st.markdown("<br>", unsafe_allow_html=True)
             
-        submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기")
+        submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기", key="btn_submit_step2")
         
     # -------------------------------------------------------------------------
     # [초안정화 수술] 비즈니스 연산 성공 시 화면 전환을 최우선 보장하는 구조 설계

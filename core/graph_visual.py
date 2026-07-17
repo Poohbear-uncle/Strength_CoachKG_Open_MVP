@@ -110,23 +110,26 @@ def build_pyvis_graph(session_token, top_results):
         if code in strength_map:
             s_detail = strength_map[code]
             
-            # 시너지 관계선 (초록색 실선)
+            # 1. 시너지 관계선 (초록색 실선)
             for syn in s_detail.get("synergy_with", []):
                 if syn in added_nodes:
-                    if syn in net.get_nodes():
+                    # 양측 노드가 모두 메모리에 등록되어 있을 때만 간선 생성
+                    if code in net.get_nodes() and syn in net.get_nodes():
                         net.add_edge(code, syn, value=1.5, color="#2ecc71", title="상호 시너지 효과")
                     
-            # 보완/균형 관계선 (주황색 대시선)
+            # 2. 보완/균형 관계선 (주황색 대시선)
             for bal in s_detail.get("balances", []):
                 if bal in added_nodes:
-                    if bal in net.get_nodes():
+                    # 양측 노드가 모두 메모리에 등록되어 있을 때만 간선 생성
+                    if code in net.get_nodes() and bal in net.get_nodes():
                         net.add_edge(code, bal, value=1.5, color="#e67e22", dashes=True, title="상호 보완 균형 조화")
-                    
-            # 충돌/대립 관계선 (빨간색 점선)
+
+            # 3. 충돌/대립 관계선 (빨간색 점선)
             for con in s_detail.get("conflicts_with", []):
                 if con in added_nodes:
-                    if con in net.get_nodes():
-                        net.add_edge(code, con, value=1.0, color="#e74c3c", dashes=[4, 4], title="주의가 필요한 성향적 대립")
+                    # 양측 노드가 모두 메모리에 등록되어 있을 때만 간선 생성
+                    if code in net.get_nodes() and con in net.get_nodes():
+                        net.add_edge(code, con, value=1.0, color="#e74c3c", dashes=True, title="주의가 필요한 상충")
 
     # 5. 로컬 물리적 파일로 빌드 저장
     net.write_html(output_path)
