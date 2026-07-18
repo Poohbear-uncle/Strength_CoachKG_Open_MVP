@@ -371,8 +371,8 @@ def generate_pdf_report(session_token, user_meta, results):
     pdf.set_font(font_family, "", 9.5)
     pdf.set_text_color(80, 80, 80)
     if group_b_results:
-        # 상위 2개 보완 강점 상세 분석 수록
-        for r in group_b_results[:2]:
+        # 상위 3개 보완 강점 상세 분석 수록 (화면 UI 기본 노출 개수와 일치)
+        for r in group_b_results[:3]:
             s_detail = s_map.get(r["code"], {})
             interp = s_detail.get("interpretation", {}).get("complementary", "핵심 강점을 보조하여 성과의 기둥 역할을 합니다.")
             pdf.set_font(font_family, "B", 10)
@@ -384,7 +384,7 @@ def generate_pdf_report(session_token, user_meta, results):
         # 나머지 전수 리스트 출력
         pdf.set_font(font_family, "B", 9.5)
         pdf.set_text_color(120, 120, 120)
-        other_b_names = [r["name"] for r in group_b_results[2:]]
+        other_b_names = [r["name"] for r in group_b_results[3:]]
         if other_b_names:
             pdf.multi_cell(0, 5, clean(f"※ 기타 분류된 보완 강점 명단: {', '.join(other_b_names)}"))
     else:
@@ -401,8 +401,8 @@ def generate_pdf_report(session_token, user_meta, results):
     pdf.set_font(font_family, "", 9.5)
     pdf.set_text_color(80, 80, 80)
     if group_c_results:
-        # 상위 2개 일반/미개발 강점 상세 분석 수록
-        for r in group_c_results[:2]:
+        # 상위 3개 일반/미개발 강점 상세 분석 수록 (화면 UI 기본 노출 개수와 일치)
+        for r in group_c_results[:3]:
             s_detail = s_map.get(r["code"], {})
             interp = s_detail.get("interpretation", {}).get("undeveloped", "외부 협업 및 시스템의 지원을 받아 효율을 보완합니다.")
             pdf.set_font(font_family, "B", 10)
@@ -414,7 +414,7 @@ def generate_pdf_report(session_token, user_meta, results):
         # 나머지 전수 리스트 출력
         pdf.set_font(font_family, "B", 9.5)
         pdf.set_text_color(120, 120, 120)
-        other_c_names = [r["name"] for r in group_c_results[2:]]
+        other_c_names = [r["name"] for r in group_c_results[3:]]
         if other_c_names:
             pdf.multi_cell(0, 5, clean(f"※ 기타 분류된 일반/미개발 강점 명단: {', '.join(other_c_names)}"))
     else:
