@@ -1,6 +1,6 @@
 # app.py
 import streamlit as st
-import streamlit.components.v1 as components
+import streamlit.components.v1 as components  # 표준 HTML 컴포넌트 수입
 import base64
 import uuid
 import os
@@ -321,15 +321,15 @@ elif st.session_state.step == 3:
                 depth=explore_depth
             )
         
+        # [최종 무결성 패치] sandbox 보안 한계를 돌파하기 위해 Base64 주입(st.iframe)을 버리고
+        # Streamlit 공식 Native HTML 렌더러인 components.html 방식을 단독 채택합니다.
         if html_path:
             try:
                 with open(html_path, 'r', encoding='utf-8') as f:
                     html_data = f.read()
                 
-                b64_html = base64.b64encode(html_data.encode('utf-8')).decode('utf-8')
-                iframe_src = f"data:text/html;base64,{b64_html}"
-                
-                st.iframe(src=iframe_src, height=600)
+                # unpkg CDN 자바스크립트를 차단하지 않고 정상 로드하는 유일하게 신뢰받는 통로
+                components.html(html_data, height=600, scrolling=False)
                 
             except Exception as e:
                 st.error(f"지도를 화면에 표시하는 과정에서 오류가 발생했습니다: {e}")
