@@ -7,8 +7,8 @@ from core.assessment import load_ontology
 
 def build_pyvis_graph(session_id, top_5, depth=1):
     """
-    불안정한 PyVis 엔진을 완전히 우회하여, 파이썬 네이티브 JSON 데이터와 
-    웹 표준 Vis.js CDN을 결합해 절대로 죽지 않는 고화질 지반 지도를 생성합니다.
+    파이썬 네이티브 데이터(JSON)와 cdnjs의 초고속 CDN을 결합하여 지도를 그립니다.
+    브라우저 콘솔(F12)에서 실행 상태를 실시간 추적할 수 있도록 자체 로깅 코드가 내장되어 있습니다.
     """
     print("\n" + "="*60)
     print("[GRAPH-NATIVE] 1. 커스텀 지형도 엔진 기동 시작")
@@ -62,7 +62,7 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                             edges_to_add.add(edge_key)
             current_frontier = next_frontier
 
-        # 3. 웹 표준 렌더링에 적합한 JSON 포맷터 구성
+        # 3. 노드 스타일링 매핑
         print("[GRAPH-NATIVE] 4. 노드 데이터 스타일링 매핑 중...")
         nodes_data = []
         for code, meta in nodes_to_add.items():
@@ -96,6 +96,7 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                     node_style.update({"size": 10, "color": "#d1d5db"})
             nodes_data.append(node_style)
 
+        # 4. 엣지 스타일링 매핑
         print("[GRAPH-NATIVE] 5. 엣지 데이터 스타일링 매핑 중...")
         edges_data = []
         for source, target, rel_type in edges_to_add:
@@ -124,16 +125,16 @@ def build_pyvis_graph(session_id, top_5, depth=1):
           }
         }
 
-        # 4. 무결성 HTML 템플릿 컴파일 (외부 스크립트 붕괴 가능성 제로)
-        print("[GRAPH-NATIVE] 6. 무결성 가상 HTML 컴파일 중...")
+        # 5. 무결성 HTML 템플릿 컴파일 및 브라우저 디버깅 추적 코드 내장
+        print("[GRAPH-NATIVE] 6. 무결성 가상 HTML 컴파일 및 JS 진단 기능 주입 중...")
         html_template = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
             <title>CoachKG Network Graph</title>
-            <!-- 가장 안정적인 글로벌 초고속 CDN standalone 라이브러리 고정 바인딩 -->
-            <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+            <!-- unpkg의 보안 장벽을 우회하기 위해 가장 신뢰성이 높은 Cloudflare cdnjs 절대 경로 라이브러리 사용 -->
+            <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/standalone/umd/vis-network.min.js"></script>
             <style type="text/css">
                 #mynetwork {{
                     width: 100%;
@@ -152,22 +153,39 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         <body>
         <div id="mynetwork"></div>
         <script type="text/javascript">
-            // 파이썬 데이터를 다이렉트로 주입하여 프론트엔드 파싱 크래시 원천 차단
-            var nodes = new vis.DataSet({json.dumps(nodes_data, ensure_ascii=False)});
-            var edges = new vis.DataSet({json.dumps(edges_data, ensure_ascii=False)});
-            var container = document.getElementById('mynetwork');
-            var data = {{
-                nodes: nodes,
-                edges: edges
-            }};
-            var options = {json.dumps(graph_options, ensure_ascii=False)};
-            var network = new vis.Network(container, data, options);
+            console.log("[GRAPH-JS] 🪐 자바스크립트 엔진 기동을 시작합니다.");
+            
+            try {{
+                var rawNodes = {json.dumps(nodes_data, ensure_ascii=False)};
+                var rawEdges = {json.dumps(edges_data, ensure_ascii=False)};
+                
+                console.log("[GRAPH-JS] 전달된 노드 데이터 개수: " + rawNodes.length);
+                console.log("[GRAPH-JS] 전달된 엣지 데이터 개수: " + rawEdges.length);
+                
+                var nodes = new vis.DataSet(rawNodes);
+                var edges = new vis.DataSet(rawEdges);
+                var container = document.getElementById('mynetwork');
+                
+                var data = {{
+                    nodes: nodes,
+                    edges: edges
+                }};
+                
+                var options = {json.dumps(graph_options, ensure_ascii=False)};
+                
+                console.log("[GRAPH-JS] vis.Network 인스턴스 생성을 시도합니다...");
+                var network = new vis.Network(container, data, options);
+                console.log("[GRAPH-JS] ✅ 지도가 브라우저 화면에 성공적으로 안착했습니다!");
+                
+            }} catch (js_err) {{
+                console.error("[GRAPH-JS] ❌ 지도를 그리는 도중 내부 런타임 에러가 감지되었습니다: ", js_err);
+            }}
         </script>
         </body>
         </html>
         """
 
-        # 5. 디렉토리 표준 보관소 저장
+        # 6. 디렉토리 표준 보관소 저장
         output_folder = tempfile.gettempdir()
         output_path = os.path.join(output_folder, f"temp_graph_{session_id}.html")
         
@@ -175,7 +193,7 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(html_template)
             
-        print("[GRAPH-NATIVE] 🪐 [성공] 완벽한 무결성 지형망 컴파일 완료!")
+        print("[GRAPH-NATIVE] 🪐 [성공] 무결성 지형망 및 진단 모듈 컴파일 완료!")
         print("="*60 + "\n")
         return output_path
 
