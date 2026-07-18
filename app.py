@@ -308,7 +308,7 @@ elif st.session_state.step == 3:
         
         # 어떠한 브라우저도 차단할 수 없는 무결성 이미지 주입 방식 사용
         if image_path and os.path.exists(image_path):
-            st.image(image_path, use_column_width=True)
+            st.image(image_path, use_container_width=True)
         else:
             st.warning(
                 "⚠️ 지식 관계 지형도를 그리지 못했습니다. "
