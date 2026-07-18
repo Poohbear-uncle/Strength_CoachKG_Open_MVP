@@ -1,6 +1,6 @@
 # app.py
 import streamlit as st
-import streamlit.components.v1 as components  # 표준 HTML 컴포넌트 수입
+import streamlit.components.v1 as components
 import base64
 import uuid
 import os
@@ -295,49 +295,24 @@ elif st.session_state.step == 3:
             help="1단계는 내 핵심 강점들의 직접 연계된 요소만 보여줍니다. 2단계는 그 너머의 간접적인 연계 관계까지 온톨로지를 확장하여 심층 분석 지형을 구성합니다."
         )
         
-        # 깔끔하고 정돈된 CSS 기반 범례(Legend) 레이어 출력
-        st.markdown("""
-        <div style="background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 0.85em; line-height: 1.6; margin-bottom: 15px; color: #2c3e50;">
-            <strong>🧭 강점 지형도 범례 (Legend)</strong><br>
-            🟢 <b>초록 원:</b> 나의 대표 강점 (크기=점수) | 
-            ▲ <b>보라 삼각:</b> 상위 대덕목 | 
-            🔵 <b>남색 원:</b> 1차 이웃 강점 |
-            🔘 <b>회색 원:</b> 2차 간접 연계 강점 (심층)<br>
-            <span style="color:#e2e8f0;">━━</span> 회색선: 덕목 소속 관계 | 
-            <span style="color:#2ecc71;">━━</span> 초록선: 상호 시너지 | 
-            <span style="color:#e67e22;">- -</span> 주황 대시선: 상호 보완 균형 | 
-            <span style="color:#e74c3c;">····</span> 빨간 점선: 주의 필요 상충
-        </div>
-        """, unsafe_allow_html=True)
-        
         # =====================================================================
-        # [철통 격리 보안막] 그래프 연산이 폭발하더라도 메인 쓰레드는 영향 받지 않음
+        # [서버사이드 무결성 랜더러] 브라우저의 JS 및 Sandbox 간섭이 전면 배제된 고화질 이미지 로드
         # =====================================================================
-        html_path = None
-        with st.spinner("🌌 강점 지형 네트워크 지도를 동적으로 그리는 중..."):
-            html_path = build_pyvis_graph(
-                session_id=st.session_state.browser_session_id,
-                top_5=top_5,
+        image_path = None
+        with st.spinner("🌌 서버에서 지형도 네트워크를 정밀하게 그리는 중..."):
+            image_path = build_pyvis_graph(
+                st.session_state.browser_session_id,
+                top_5,
                 depth=explore_depth
             )
         
-        # [최종 무결성 패치] sandbox 보안 한계를 돌파하기 위해 Base64 주입(st.iframe)을 버리고
-        # Streamlit 공식 Native HTML 렌더러인 components.html 방식을 단독 채택합니다.
-        if html_path:
-            try:
-                with open(html_path, 'r', encoding='utf-8') as f:
-                    html_data = f.read()
-                
-                # unpkg CDN 자바스크립트를 차단하지 않고 정상 로드하는 유일하게 신뢰받는 통로
-                components.html(html_data, height=600, scrolling=False)
-                
-            except Exception as e:
-                st.error(f"지도를 화면에 표시하는 과정에서 오류가 발생했습니다: {e}")
+        # 어떠한 브라우저도 차단할 수 없는 무결성 이미지 주입 방식 사용
+        if image_path and os.path.exists(image_path):
+            st.image(image_path, use_column_width=True)
         else:
             st.warning(
-                "⚠️ 지식 관계 지형도를 안전하게 그리지 못했습니다.\n\n"
-                "사용하시는 운영체제나 서버 네트워크가 PyVis 종속성 파일을 읽지 못하는 환경일 수 있습니다. "
-                "그러나 결과 보존과 우측의 상세 해석 정보, 하단의 PDF 보고서 정상 활용에는 아무런 지장이 없습니다."
+                "⚠️ 지식 관계 지형도를 그리지 못했습니다. "
+                "그러나 하단의 PDF 보고서 다운로드 기능과 해석 정보는 완벽하게 작동합니다."
             )
                 
     with col2:
