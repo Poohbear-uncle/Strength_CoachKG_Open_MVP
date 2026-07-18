@@ -1,4 +1,4 @@
-# app.py
+# app.py (기존 소스 교체용)
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
@@ -6,7 +6,7 @@ import uuid
 import os
 import json
 import time
-import tempfile  # 크로스플랫폼 경로 표준 통일용 주입
+import tempfile
 
 # 모듈 수입
 from database.local_db import init_local_db, save_user_run, get_user_history_by_email
@@ -50,7 +50,6 @@ if "last_cleanup_time" not in st.session_state:
 # =============================================================================
 # 3. [1단계] 임시 파일 가비지 컬렉터 실행 제어
 # =============================================================================
-# tempfile.gettempdir()를 기준으로 파일 청소를 수행하여 크로스플랫폼(Windows/Linux) 호환을 달성합니다.
 CLEANUP_INTERVAL_SECONDS = 1800 
 current_time = time.time()
 
@@ -305,14 +304,20 @@ elif st.session_state.step == 3:
         </div>
         """, unsafe_allow_html=True)
         
-        # 고도화된 build_pyvis_graph 호출 (explore_depth 주입)
-        html_path = build_pyvis_graph(
-            st.session_state.browser_session_id, 
-            top_5, 
-            depth=explore_depth
-        )
+        # =====================================================================
+        # [완전 차단 수술] build_pyvis_graph가 폭발해도 화면 전체가 죽지 않도록 격리 차단
+        # =====================================================================
+        html_path = None
+        try:
+            html_path = build_pyvis_graph(
+                st.session_state.browser_session_id, 
+                top_5, 
+                depth=explore_depth
+            )
+        except Exception as graph_err:
+            st.error(f"지도를 가동하는 라이브러리 엔진에서 예외가 차단되었습니다: {graph_err}")
         
-        if os.path.exists(html_path):
+        if html_path and os.path.exists(html_path):
             try:
                 with open(html_path, 'r', encoding='utf-8') as f:
                     html_data = f.read()
@@ -325,7 +330,7 @@ elif st.session_state.step == 3:
             except Exception as e:
                 st.error(f"지도를 화면에 표시하는 과정에서 오류가 발생했습니다: {e}")
         else:
-            st.warning(f"⚠️ 임시 지도가 생성되지 않았습니다. (지정 경로: {html_path})")
+            st.warning("⚠️ 지식 관계 지형도가 가용한 리소스를 준비하지 못했습니다. 우측의 상세 피드백과 하단의 보고서는 정상 동작합니다.")
                 
     with col2:
         st.write("### 📑 최상위 강점 상세 정보")
