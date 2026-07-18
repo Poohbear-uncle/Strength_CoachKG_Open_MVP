@@ -2,23 +2,22 @@
 import os
 import json
 import tempfile
+import traceback
 from pyvis.network import Network
 from core.assessment import load_ontology
 
 def build_pyvis_graph(session_id, top_5, depth=1):
     """
     사용자의 상위 5대 강점을 기반으로 온톨로지 관계망 지도를 빌드하여 HTML 파일 경로를 반환합니다.
-    모든 모듈에 예외 안전장치를 적용하여 에러가 발생해도 전체 렌더링이 중단되지 않도록 보호합니다.
+    절대로 예외를 밖으로 던지지 않고, 실패 시 None을 반환하여 메인 프로세스를 보호합니다.
     """
-    print(f"\n[DEBUG_GRAPH] ===============================================")
-    print(f"[DEBUG_GRAPH] 🧭 [1단계] build_pyvis_graph 진입 (Session: {session_id})")
-    
-    output_folder = tempfile.gettempdir()
-    output_path = os.path.join(output_folder, f"temp_graph_{session_id}.html")
+    print("\n" + "="*60)
+    print("[GRAPH] 1. build_pyvis_graph 진입 및 초기화 시작")
+    print(f"[GRAPH] Session ID: {session_id} | Depth: {depth}")
     
     try:
-        # 1. 온톨로지 파일 로드 검증
-        print(f"[DEBUG_GRAPH] 🧭 [2단계] 온톨로지 데이터 로드 중...")
+        # Step 1: 온톨로지 로드
+        print("[GRAPH] 2. 온톨로지 데이터(strengths.json) 로딩 중...")
         ontology = load_ontology()
         s_map = {s["code"]: s for s in ontology["strengths"]}
         v_map = {v["code"]: v for v in ontology["virtues"]}
@@ -26,8 +25,8 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         
         core_codes = [r["code"] for r in top_5]
         
-        # 2. 너비 우선 탐색 (BFS) 연산
-        print(f"[DEBUG_GRAPH] 🧭 [3단계] 관계망 BFS 연산 수행 중...")
+        # Step 2: BFS 탐색 연산
+        print("[GRAPH] 3. BFS 그래프 서브셋 탐색 수행 중...")
         nodes_to_add = {}
         edges_to_add = set()
         
@@ -64,8 +63,8 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                             edges_to_add.add(edge_key)
             current_frontier = next_frontier
 
-        # 3. PyVis Network 객체 생성
-        print(f"[DEBUG_GRAPH] 🧭 [4단계] PyVis Network 초기화 중...")
+        # Step 3: PyVis Network 인스턴스 생성
+        print("[GRAPH] 4. PyVis Network 객체 생성 중...")
         net = Network(
             height="550px", 
             width="100%", 
@@ -74,8 +73,8 @@ def build_pyvis_graph(session_id, top_5, depth=1):
             cdn_resources="remote"
         )
         
-        # 4. 물리엔진 정합성 설정 (버전 호환용 예외 처리 탑재)
-        print(f"[DEBUG_GRAPH] 🧭 [5단계] 물리엔진 옵션 주입 중...")
+        # Step 4: 세부 렌더링 옵션 제어 (예외 수용형 설계)
+        print("[GRAPH] 5. set_options 물리 주입 수행 중...")
         graph_options = {
           "nodes": { "borderWidth": 1.5, "borderWidthSelected": 3 },
           "edges": { "smooth": { "type": "continuous", "forceDirection": "none" } },
@@ -87,11 +86,10 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         try:
             net.set_options(json.dumps(graph_options))
         except Exception as opt_err:
-            # set_options가 버전에 따라 실패하더라도 그래프 생성은 중단되지 않도록 폴백
-            print(f"[DEBUG_GRAPH] ⚠️ 경고: set_options 설정 중 예외가 발생했으나 기본 스타일로 속행합니다. ({opt_err})")
+            print(f"[GRAPH] ⚠️ [Warning] set_options 무시됨: {opt_err}")
 
-        # 5. 수집된 노드 주입
-        print(f"[DEBUG_GRAPH] 🧭 [6단계] 노드 주입 중... (총 {len(nodes_to_add)}개)")
+        # Step 5: 노드 수립 및 추가
+        print(f"[GRAPH] 6. Network 노드 정의 및 바인딩 중... (총 {len(nodes_to_add)}개)")
         for code, meta in nodes_to_add.items():
             lvl = meta["level"]
             ntype = meta["type"]
@@ -121,13 +119,12 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                     node_style.update({"size": 10, "color": "#d1d5db"})
             
             try:
-                # n_id를 명시적으로 파라미터 분리하여 버전 호환성 완벽 확보
                 net.add_node(code, **node_style)
             except Exception as node_err:
-                print(f"[DEBUG_GRAPH] ⚠️ 경고: 노드 [{code}] 주입 실패: {node_err}")
+                print(f"[GRAPH] ⚠️ [Warning] 노드 주입 실패 ({code}): {node_err}")
 
-        # 6. 수집된 엣지 주입
-        print(f"[DEBUG_GRAPH] 🧭 [7단계] 엣지 주입 중... (총 {len(edges_to_add)}개)")
+        # Step 6: 엣지 수립 및 추가
+        print(f"[GRAPH] 7. Network 엣지 관계 정의 중... (총 {len(edges_to_add)}개)")
         for source, target, rel_type in edges_to_add:
             edge_style = {
                 "source": source,
@@ -147,52 +144,39 @@ def build_pyvis_graph(session_id, top_5, depth=1):
             try:
                 net.add_edge(**edge_style)
             except Exception as edge_err:
-                print(f"[DEBUG_GRAPH] ⚠️ 경고: 엣지 [{source} -> {target}] 주입 실패: {edge_err}")
+                print(f"[GRAPH] ⚠️ [Warning] 엣지 결합 실패 ({source}->{target}): {edge_err}")
 
-        # 7. 파일 저장 (임시 디렉토리 보안 및 호환성 확보)
-        print(f"[DEBUG_GRAPH] 🧭 [8단계] 임시 파일 보관소 저장 중... ({output_path})")
-        net.save_graph(output_path)
-
-        # 8. HTML 템플릿의 로컬 상대 참조 복구
-        print(f"[DEBUG_GRAPH] 🧭 [9단계] HTML 내 로컬 의존성 복구 및 보정 중...")
-        if os.path.exists(output_path):
-            with open(output_path, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            # 버그 유발 요인이었던 utils.js 교체 코드를 안전하게 격리 제거했습니다.
-            html_content = html_content.replace(
-                'lib/vis-10.1.0/vis-network.min.js',
-                'https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'
-            )
-            
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(html_content)
+        # Step 7: 임시 물리 디렉토리에 파일 라이팅
+        print("[GRAPH] 8. 임시 보관 폴더에 PyVis 물리 디스크 라이팅 중...")
+        output_folder = tempfile.gettempdir()
+        output_path = os.path.join(output_folder, f"temp_graph_{session_id}.html")
         
-        print(f"[DEBUG_GRAPH] 🪐 [성공] build_pyvis_graph가 아무 사고 없이 최종 완료되었습니다.\n")
+        net.save_graph(output_path)
+        
+        if not os.path.exists(output_path):
+            raise RuntimeError(f"물리 HTML 파일 생성이 무시되었거나 실패했습니다: {output_path}")
+
+        # Step 8: HTML 후처리 패치
+        print("[GRAPH] 9. HTML 로컬 CDN 주소 맵 변경 및 패치 중...")
+        with open(output_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        html_content = html_content.replace(
+            'lib/vis-10.1.0/vis-network.min.js',
+            'https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'
+        )
+        
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+            
+        print("[GRAPH] 10. 지식 지도 생성 전 과정 정상 완료!")
+        print("="*60 + "\n")
         return output_path
 
-    except Exception as fatal_error:
-        # 치명적인 에러가 나서 빌드가 완전히 붕괴되었을 때의 방어막 폴백
-        print(f"[DEBUG_GRAPH] ❌ 치명적 붕괴 감지: {fatal_error}")
-        print(f"[DEBUG_GRAPH] 🛡️ [방어 조치] 사용자 화면 보호용 임시 안전 HTML을 대체 생성합니다.")
-        
-        try:
-            fallback_html = f"""
-            <html>
-            <body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #7f8c8d; background-color: #f8f9fa;">
-                <div style="text-align: center; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: white;">
-                    <p style="font-size: 32px; margin: 0;">🧭</p>
-                    <h3 style="color: #2c3e50; margin: 10px 0;">관계 지도 생성 일시 지연</h3>
-                    <p style="font-size: 13px; line-height: 1.5;">현재 사용하시는 환경의 웹 라이브러리(PyVis) 로드 과정에서 충돌이 감지되었습니다.<br>
-                    우측의 <b>상세 역동성 해석 정보</b> 및 하단의 <b>PDF 보고서</b> 기능은 정상 확인하실 수 있습니다.</p>
-                    <p style="font-size: 10px; color: #cbd5e1; margin-top: 15px;">Error: {str(fatal_error)}</p>
-                </div>
-            </body>
-            </html>
-            """
-            with open(output_path, 'w', encoding='utf-8') as f:
-                f.write(fallback_html)
-            return output_path
-        except Exception as file_err:
-            print(f"[DEBUG_GRAPH] 🚨 폴백 파일 생성조차 실패: {file_err}")
-            return None
+    except Exception as fatal_err:
+        # 어떠한 최악의 오류가 나더라도 절대로 위로 Exception을 던지지 않고 로그만 남기고 차단합니다.
+        print("\n" + "!"*60)
+        print("[GRAPH] ❌ [치명적 붕괴] build_pyvis_graph가 비정상적으로 종료되었습니다.")
+        traceback.print_exc()
+        print("!"*60 + "\n")
+        return None

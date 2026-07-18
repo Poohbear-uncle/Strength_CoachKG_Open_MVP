@@ -1,4 +1,4 @@
-# app.py (기존 소스 교체용)
+# app.py
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
@@ -305,19 +305,17 @@ elif st.session_state.step == 3:
         """, unsafe_allow_html=True)
         
         # =====================================================================
-        # [완전 차단 수술] build_pyvis_graph가 폭발해도 화면 전체가 죽지 않도록 격리 차단
+        # [철통 격리 보안막] 그래프 연산이 폭발하더라도 메인 쓰레드는 영향 받지 않음
         # =====================================================================
         html_path = None
-        try:
+        with st.spinner("🌌 강점 지형 네트워크 지도를 동적으로 그리는 중..."):
             html_path = build_pyvis_graph(
-                st.session_state.browser_session_id, 
-                top_5, 
+                session_id=st.session_state.browser_session_id,
+                top_5=top_5,
                 depth=explore_depth
             )
-        except Exception as graph_err:
-            st.error(f"지도를 가동하는 라이브러리 엔진에서 예외가 차단되었습니다: {graph_err}")
         
-        if html_path and os.path.exists(html_path):
+        if html_path:
             try:
                 with open(html_path, 'r', encoding='utf-8') as f:
                     html_data = f.read()
@@ -330,7 +328,11 @@ elif st.session_state.step == 3:
             except Exception as e:
                 st.error(f"지도를 화면에 표시하는 과정에서 오류가 발생했습니다: {e}")
         else:
-            st.warning("⚠️ 지식 관계 지형도가 가용한 리소스를 준비하지 못했습니다. 우측의 상세 피드백과 하단의 보고서는 정상 동작합니다.")
+            st.warning(
+                "⚠️ 지식 관계 지형도를 안전하게 그리지 못했습니다.\n\n"
+                "사용하시는 운영체제나 서버 네트워크가 PyVis 종속성 파일을 읽지 못하는 환경일 수 있습니다. "
+                "그러나 결과 보존과 우측의 상세 해석 정보, 하단의 PDF 보고서 정상 활용에는 아무런 지장이 없습니다."
+            )
                 
     with col2:
         st.write("### 📑 최상위 강점 상세 정보")
