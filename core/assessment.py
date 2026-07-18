@@ -20,9 +20,10 @@ def calculate_scores(card_sorting, survey_responses):
     survey_responses: {"STR_CREATIVITY": 5, ...} (A그룹으로 선별된 항목만 5점 척도 답변 존재)
     
     [기초 알고리즘 계산 규칙]
-    - 기본 가중치 점수 부여: A그룹(대표강점)은 기본 3.0점, C그룹(미사용)은 1.0점 부여
+    - 기본 가중치 점수 부여: A그룹(대표강점)은 기본 3.0점, B그룹(보완강점)은 기본 2.0점,
+      C그룹(일반/미개발)은 1.0점 부여 (3분류 UI 의미를 반영해 A>B>C 우선순위 유지)
     - 리커트 척도 검증 가중치: A그룹 중 슬라이더로 입력받은 검증 점수(1~5점)를 0.4 배율로 정규화 반영
-    - 최종 점수 범위: 대표강점(A)은 검증에 따라 3.4 ~ 5.0점, 일반강점(C)은 1.0점 고정
+    - 최종 점수 범위: 대표강점(A)은 검증에 따라 3.4 ~ 5.0점, 보완강점(B)은 2.0점 고정, 일반강점(C)은 1.0점 고정
     """
     ontology = load_ontology()
     results = []
@@ -35,7 +36,12 @@ def calculate_scores(card_sorting, survey_responses):
             continue
             
         s_info = strength_map[code]
-        base_score = 3.0 if group == "A" else 1.0
+        if group == "A":
+            base_score = 3.0
+        elif group == "B":
+            base_score = 2.0
+        else:  # C
+            base_score = 1.0
         survey_addon = 0.0
         
         # A그룹 선별 강점 중 설문 응답이 있는 경우 가중치 추가

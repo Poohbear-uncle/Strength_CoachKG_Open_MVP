@@ -383,8 +383,11 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
         except:
             pass
 
+    # /tmp에 저장 (graph_visual.py의 임시 그래프 파일과 동일한 위치로 통일).
+    # app.py의 clean_temporary_files GC가 /tmp만 청소하므로, 프로젝트 루트에 저장하면
+    # 1) 읽기전용 배포 환경에서 PermissionError 위험, 2) 파일이 영구히 쌓이는 문제가 있었음.
     output_filename = f"report_{session_token}.pdf"
-    output_pdf_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), output_filename)
+    output_pdf_path = os.path.join(tempfile.gettempdir(), output_filename)
     
     pdf.output(output_pdf_path)
     return output_pdf_path

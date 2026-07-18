@@ -145,7 +145,9 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                     "shape": "dot"
                 })
                 
-        net.add_node(**node_style)
+        # pyvis Network.add_node()의 첫 인자명은 'n_id'이지 'id'가 아니므로
+        # 딕셔너리를 그대로 언패킹하면 TypeError(n_id 누락)가 발생함.
+        net.add_node(node_style.pop("id"), **node_style)
 
     # 6. 수집된 엣지 PyVis에 등록
     for source, target, rel_type in edges_to_add:
