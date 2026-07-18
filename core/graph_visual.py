@@ -7,6 +7,7 @@ from core.assessment import load_ontology
 def build_pyvis_graph(session_id, top_5, depth=1):
     """
     사용자의 상위 5대 강점을 기반으로 온톨로지 관계망 지도를 빌드하여 HTML 파일 경로를 반환합니다.
+    (Streamlit Base64 Iframe 환경에서 안정적으로 동작하도록 CDN 강제 주입 모델을 사용합니다.)
     
     :param session_id: 세션별 파일 격리를 위한 ID
     :param top_5: 분석 점수가 가장 높은 상위 5개 강점 객체 리스트
@@ -16,6 +17,9 @@ def build_pyvis_graph(session_id, top_5, depth=1):
     ontology = load_ontology()
     s_map = {s["code"]: s for s in ontology["strengths"]}
     v_map = {v["code"]: v for v in ontology["virtues"]}
+    
+    # strengths.json의 역매핑 사전 구축 (덕목 이름 -> 덕목 코드)
+    virtue_name_to_code = {v["name"]: v["code"] for v in ontology["virtues"]}
     
     core_codes = [r["code"] for r in top_5]
     
@@ -28,8 +32,11 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         code = r["code"]
         if code in s_map:
             nodes_to_add[code] = {"level": 0, "type": "Strength"}
-            # 소속 덕목 노드 및 소속(BELONGS_TO) 엣지 추가
-            v_code = s_map[code].get("virtue_code")
+            
+            # 역매핑 사전을 이용해 안전하게 대덕목 노드 추출 및 배치
+            v_name = s_map[code].get("virtue_name")
+            v_code = virtue_name_to_code.get(v_name)
+            
             if v_code:
                 nodes_to_add[v_code] = {"level": 0, "type": "Virtue"}
                 edges_to_add.add((code, v_code, "BELONGS_TO"))
@@ -44,7 +51,6 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                 continue
                 
             s_detail = s_map[code]
-            # 온톨로지 관계 유형 분류
             relations = {
                 "SYNERGY_WITH": s_detail.get("synergy_with", []),
                 "BALANCES": s_detail.get("balances", []),
@@ -54,23 +60,26 @@ def build_pyvis_graph(session_id, top_5, depth=1):
             for rel_type, targets in relations.items():
                 for t_code in targets:
                     if t_code in s_map:
-                        # 아직 발견되지 않은 노드인 경우에만 레벨 부여
                         if t_code not in nodes_to_add:
                             nodes_to_add[t_code] = {"level": current_depth, "type": "Strength"}
                             next_frontier.add(t_code)
                         
-                        # 무방향성 엣지 중복 방지 정렬하여 엣지 수집
                         edge_key = (min(code, t_code), max(code, t_code), rel_type)
                         edges_to_add.add(edge_key)
                         
         current_frontier = next_frontier
 
-    # 3. PyVis 네트워크 그래프 생성 및 설정
-    net = Network(height="550px", width="100%", bgcolor="#ffffff", font_color="#2c3e50")
+    # 3. PyVis 네트워크 생성 (cdn_resources='remote' 옵션으로 로컬 의존성 차단)
+    net = Network(
+        height="550px", 
+        width="100%", 
+        bgcolor="#ffffff", 
+        font_color="#2c3e50",
+        cdn_resources="remote"  # 절대 경로 CDN 사용 지시
+    )
     
-    # 그래프 렌더링에 필요한 물리 시뮬레이션 옵션 최적화 (진동 방지 및 밀집 억제)
-    net.set_options("""
-    var options = {
+    # 4. 물리엔진 정합성 설정 (딕셔너리 정형화 주입으로 문법 오류 원천 방지)
+    graph_options = {
       "nodes": {
         "borderWidth": 1.5,
         "borderWidthSelected": 3
@@ -91,14 +100,13 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         "minVelocity": 0.75
       }
     }
-    """)
+    net.set_options(json.dumps(graph_options))
     
-    # 4. 수집된 노드 PyVis에 등록 (계층별 스타일 디테일링 차등화)
+    # 5. 수집된 노드 PyVis에 등록
     for code, meta in nodes_to_add.items():
         lvl = meta["level"]
         ntype = meta["type"]
         
-        # 기본 스타일셋 정의
         node_style = {
             "id": code,
             "label": code,
@@ -108,7 +116,6 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         }
         
         if ntype == "Virtue":
-            # 대덕목 노드 스타일링 (Amethyst Purple)
             node_style.update({
                 "label": v_map.get(code, {}).get("name", code),
                 "size": 22,
@@ -116,26 +123,22 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                 "shape": "triangle"
             })
         else:
-            # 강점 노드 레벨별 시각 위계 정의
             name = s_map.get(code, {}).get("name", code)
             node_style["label"] = name
             
             if lvl == 0:
-                # 상위 5대 핵심 강점 (Emerald Green, 크게 노출)
                 node_style.update({
                     "size": 26,
                     "color": "#2ecc71",
                     "shape": "dot"
                 })
             elif lvl == 1:
-                # 1차 이웃 관계 강점 (Slate Blue, 중간 노출)
                 node_style.update({
                     "size": 16,
                     "color": "#34495e",
                     "shape": "dot"
                 })
             elif lvl == 2:
-                # 2차 이웃 확장 강점 (Silver Grey, 작고 투명하게 조정하여 시각 노이즈 차단)
                 node_style.update({
                     "size": 10,
                     "color": "#d1d5db",
@@ -144,7 +147,7 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                 
         net.add_node(**node_style)
 
-    # 5. 수집된 엣지 PyVis에 등록
+    # 6. 수집된 엣지 PyVis에 등록
     for source, target, rel_type in edges_to_add:
         edge_style = {
             "source": source,
@@ -154,21 +157,17 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         }
         
         if rel_type == "BELONGS_TO":
-            # 덕목 귀속선 (실선, 가늘게 표현)
             edge_style.update({"width": 0.8, "color": "#e2e8f0"})
         elif rel_type == "SYNERGY_WITH":
-            # 시너지 관계 (선명한 초록색 실선)
             edge_style.update({"width": 1.8, "color": "#2ecc71"})
         elif rel_type == "BALANCES":
-            # 보완 균형 관계 (주황색 대시선)
             edge_style.update({"width": 1.5, "color": "#e67e22", "dashes": True})
         elif rel_type == "CONFLICTS_WITH":
-            # 대립 상충 관계 (빨간색 점선)
             edge_style.update({"width": 1.5, "color": "#e74c3c", "dashes": [2, 8]})
             
         net.add_edge(**edge_style)
 
-    # 6. 임시 저장 및 절대 경로 반환
+    # 7. 파일 저장 및 Streamlit 절대 경로 반환
     output_folder = "/tmp"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -176,4 +175,21 @@ def build_pyvis_graph(session_id, top_5, depth=1):
     output_path = os.path.join(output_folder, f"temp_graph_{session_id}.html")
     net.save_graph(output_path)
     
+    # [이중 방어막] PyVis가 간혹 저장 템플릿 내부에 남겨놓는 로컬 상대 경로 링크를 온라인 CDN 주소로 강제 교정합니다.
+    if os.path.exists(output_path):
+        with open(output_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # 상대 경로 자바스크립트 참조를 무조건 절대 경로(CDN)로 변환
+        html_content = html_content.replace(
+            'lib/vis-10.1.0/vis-network.min.js',
+            'https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'
+        ).replace(
+            'lib/bindings/utils.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js'
+        )
+        
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+            
     return output_path
