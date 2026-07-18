@@ -47,7 +47,7 @@ if "bypass_db" not in st.session_state:
 if "last_cleanup_time" not in st.session_state:
     st.session_state.last_cleanup_time = 0
 
-# [개선] B, C그룹 점진적 무한 전수조사 제어용 스위치 정의
+# B, C그룹 점진적 무한 전수조사 제어용 스위치 정의
 if "show_all_b" not in st.session_state:
     st.session_state.show_all_b = False
 if "show_all_c" not in st.session_state:

@@ -3,21 +3,20 @@ import os
 import json
 import tempfile
 import traceback
-from pyvis.network import Network
 from core.assessment import load_ontology
 
 def build_pyvis_graph(session_id, top_5, depth=1):
     """
-    사용자의 상위 5대 강점을 기반으로 온톨로지 관계망 지도를 빌드하여 HTML 파일 경로를 반환합니다.
-    절대로 예외를 밖으로 던지지 않고, 실패 시 None을 반환하여 메인 프로세스를 보호합니다.
+    불안정한 PyVis 엔진을 완전히 우회하여, 파이썬 네이티브 JSON 데이터와 
+    웹 표준 Vis.js CDN을 결합해 절대로 죽지 않는 고화질 지반 지도를 생성합니다.
     """
     print("\n" + "="*60)
-    print("[GRAPH] 1. build_pyvis_graph 진입 및 초기화 시작")
-    print(f"[GRAPH] Session ID: {session_id} | Depth: {depth}")
+    print("[GRAPH-NATIVE] 1. 커스텀 지형도 엔진 기동 시작")
+    print(f"[GRAPH-NATIVE] 세션 식별자: {session_id} | 탐색 깊이: {depth}")
     
     try:
-        # Step 1: 온톨로지 로드
-        print("[GRAPH] 2. 온톨로지 데이터(strengths.json) 로딩 중...")
+        # 1. 데이터 온톨로지 정합성 로딩
+        print("[GRAPH-NATIVE] 2. 온톨로지 파일 로드 중...")
         ontology = load_ontology()
         s_map = {s["code"]: s for s in ontology["strengths"]}
         v_map = {v["code"]: v for v in ontology["virtues"]}
@@ -25,8 +24,8 @@ def build_pyvis_graph(session_id, top_5, depth=1):
         
         core_codes = [r["code"] for r in top_5]
         
-        # Step 2: BFS 탐색 연산
-        print("[GRAPH] 3. BFS 그래프 서브셋 탐색 수행 중...")
+        # 2. 관계망 BFS 연산
+        print("[GRAPH-NATIVE] 3. 지형 네트워크 관계망 BFS 연산 중...")
         nodes_to_add = {}
         edges_to_add = set()
         
@@ -63,42 +62,20 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                             edges_to_add.add(edge_key)
             current_frontier = next_frontier
 
-        # Step 3: PyVis Network 인스턴스 생성
-        print("[GRAPH] 4. PyVis Network 객체 생성 중...")
-        net = Network(
-            height="550px", 
-            width="100%", 
-            bgcolor="#ffffff", 
-            font_color="#2c3e50",
-            cdn_resources="remote"
-        )
-        
-        # Step 4: 세부 렌더링 옵션 제어 (예외 수용형 설계)
-        print("[GRAPH] 5. set_options 물리 주입 수행 중...")
-        graph_options = {
-          "nodes": { "borderWidth": 1.5, "borderWidthSelected": 3 },
-          "edges": { "smooth": { "type": "continuous", "forceDirection": "none" } },
-          "physics": {
-            "barnesHut": { "gravitationalConstant": -6000, "centralGravity": 0.35, "springLength": 95, "springConstant": 0.04 },
-            "minVelocity": 0.75
-          }
-        }
-        try:
-            net.set_options(json.dumps(graph_options))
-        except Exception as opt_err:
-            print(f"[GRAPH] ⚠️ [Warning] set_options 무시됨: {opt_err}")
-
-        # Step 5: 노드 수립 및 추가
-        print(f"[GRAPH] 6. Network 노드 정의 및 바인딩 중... (총 {len(nodes_to_add)}개)")
+        # 3. 웹 표준 렌더링에 적합한 JSON 포맷터 구성
+        print("[GRAPH-NATIVE] 4. 노드 데이터 스타일링 매핑 중...")
+        nodes_data = []
         for code, meta in nodes_to_add.items():
             lvl = meta["level"]
             ntype = meta["type"]
             
             node_style = {
+                "id": code,
                 "label": code,
                 "size": 15,
                 "color": "#bdc3c7",
-                "shape": "dot"
+                "shape": "dot",
+                "font": {"size": 12, "color": "#2c3e50"}
             }
             
             if ntype == "Virtue":
@@ -117,66 +94,94 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                     node_style.update({"size": 16, "color": "#34495e"})
                 elif lvl == 2:
                     node_style.update({"size": 10, "color": "#d1d5db"})
-            
-            try:
-                net.add_node(code, **node_style)
-            except Exception as node_err:
-                print(f"[GRAPH] ⚠️ [Warning] 노드 주입 실패 ({code}): {node_err}")
+            nodes_data.append(node_style)
 
-        # Step 6: 엣지 수립 및 추가
-        print(f"[GRAPH] 7. Network 엣지 관계 정의 중... (총 {len(edges_to_add)}개)")
+        print("[GRAPH-NATIVE] 5. 엣지 데이터 스타일링 매핑 중...")
+        edges_data = []
         for source, target, rel_type in edges_to_add:
             edge_style = {
-                "source": source,
+                "from": source,
                 "to": target,
-                "width": 1,
-                "color": "#bdc3c7"
+                "width": 1.2,
+                "color": {"color": "#bdc3c7", "highlight": "#95a5a6"}
             }
             if rel_type == "BELONGS_TO":
-                edge_style.update({"width": 0.8, "color": "#e2e8f0"})
+                edge_style.update({"width": 0.8, "color": {"color": "#e2e8f0"}})
             elif rel_type == "SYNERGY_WITH":
-                edge_style.update({"width": 1.8, "color": "#2ecc71"})
+                edge_style.update({"width": 1.8, "color": {"color": "#2ecc71"}})
             elif rel_type == "BALANCES":
-                edge_style.update({"width": 1.5, "color": "#e67e22", "dashes": True})
+                edge_style.update({"width": 1.5, "color": {"color": "#e67e22"}, "dashes": True})
             elif rel_type == "CONFLICTS_WITH":
-                edge_style.update({"width": 1.5, "color": "#e74c3c", "dashes": [2, 8]})
-            
-            try:
-                net.add_edge(**edge_style)
-            except Exception as edge_err:
-                print(f"[GRAPH] ⚠️ [Warning] 엣지 결합 실패 ({source}->{target}): {edge_err}")
+                edge_style.update({"width": 1.5, "color": {"color": "#e74c3c"}, "dashes": [2, 8]})
+            edges_data.append(edge_style)
 
-        # Step 7: 임시 물리 디렉토리에 파일 라이팅
-        print("[GRAPH] 8. 임시 보관 폴더에 PyVis 물리 디스크 라이팅 중...")
+        graph_options = {
+          "nodes": { "borderWidth": 1.5, "borderWidthSelected": 3, "font": { "multi": True } },
+          "edges": { "smooth": { "type": "continuous", "forceDirection": "none" } },
+          "physics": {
+            "barnesHut": { "gravitationalConstant": -6000, "centralGravity": 0.35, "springLength": 95, "springConstant": 0.04 },
+            "minVelocity": 0.75
+          }
+        }
+
+        # 4. 무결성 HTML 템플릿 컴파일 (외부 스크립트 붕괴 가능성 제로)
+        print("[GRAPH-NATIVE] 6. 무결성 가상 HTML 컴파일 중...")
+        html_template = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>CoachKG Network Graph</title>
+            <!-- 가장 안정적인 글로벌 초고속 CDN standalone 라이브러리 고정 바인딩 -->
+            <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+            <style type="text/css">
+                #mynetwork {{
+                    width: 100%;
+                    height: 550px;
+                    border: none;
+                    background-color: #ffffff;
+                }}
+                body {{
+                    margin: 0;
+                    padding: 0;
+                    background-color: #ffffff;
+                    overflow: hidden;
+                }}
+            </style>
+        </head>
+        <body>
+        <div id="mynetwork"></div>
+        <script type="text/javascript">
+            // 파이썬 데이터를 다이렉트로 주입하여 프론트엔드 파싱 크래시 원천 차단
+            var nodes = new vis.DataSet({json.dumps(nodes_data, ensure_ascii=False)});
+            var edges = new vis.DataSet({json.dumps(edges_data, ensure_ascii=False)});
+            var container = document.getElementById('mynetwork');
+            var data = {{
+                nodes: nodes,
+                edges: edges
+            }};
+            var options = {json.dumps(graph_options, ensure_ascii=False)};
+            var network = new vis.Network(container, data, options);
+        </script>
+        </body>
+        </html>
+        """
+
+        # 5. 디렉토리 표준 보관소 저장
         output_folder = tempfile.gettempdir()
         output_path = os.path.join(output_folder, f"temp_graph_{session_id}.html")
         
-        net.save_graph(output_path)
-        
-        if not os.path.exists(output_path):
-            raise RuntimeError(f"물리 HTML 파일 생성이 무시되었거나 실패했습니다: {output_path}")
-
-        # Step 8: HTML 후처리 패치
-        print("[GRAPH] 9. HTML 로컬 CDN 주소 맵 변경 및 패치 중...")
-        with open(output_path, 'r', encoding='utf-8') as f:
-            html_content = f.read()
-        
-        html_content = html_content.replace(
-            'lib/vis-10.1.0/vis-network.min.js',
-            'https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'
-        )
-        
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
+        print(f"[GRAPH-NATIVE] 7. 디스크 파일 쓰기 시작 ({output_path})")
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(html_template)
             
-        print("[GRAPH] 10. 지식 지도 생성 전 과정 정상 완료!")
+        print("[GRAPH-NATIVE] 🪐 [성공] 완벽한 무결성 지형망 컴파일 완료!")
         print("="*60 + "\n")
         return output_path
 
-    except Exception as fatal_err:
-        # 어떠한 최악의 오류가 나더라도 절대로 위로 Exception을 던지지 않고 로그만 남기고 차단합니다.
+    except Exception as e:
         print("\n" + "!"*60)
-        print("[GRAPH] ❌ [치명적 붕괴] build_pyvis_graph가 비정상적으로 종료되었습니다.")
+        print(f"[GRAPH-NATIVE] ❌ 엔진 내부 치명적 크래시 발생: {e}")
         traceback.print_exc()
         print("!"*60 + "\n")
         return None
