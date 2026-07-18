@@ -1,6 +1,7 @@
 # core/graph_visual.py
 import os
 import json
+import tempfile
 from pyvis.network import Network
 from core.assessment import load_ontology
 
@@ -145,8 +146,7 @@ def build_pyvis_graph(session_id, top_5, depth=1):
                     "shape": "dot"
                 })
                 
-        # pyvis Network.add_node()의 첫 인자명은 'n_id'이지 'id'가 아니므로
-        # 딕셔너리를 그대로 언패킹하면 TypeError(n_id 누락)가 발생함.
+        # pyvis Network.add_node() 구조적 안정 바인딩
         net.add_node(node_style.pop("id"), **node_style)
 
     # 6. 수집된 엣지 PyVis에 등록
@@ -169,26 +169,19 @@ def build_pyvis_graph(session_id, top_5, depth=1):
             
         net.add_edge(**edge_style)
 
-    # 7. 파일 저장 및 Streamlit 절대 경로 반환
-    output_folder = "/tmp"
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-        
+    # 7. OS에 독립적인 임시 디렉토리에 안전하게 저장
+    output_folder = tempfile.gettempdir()
     output_path = os.path.join(output_folder, f"temp_graph_{session_id}.html")
     net.save_graph(output_path)
     
-    # [이중 방어막] PyVis가 간혹 저장 템플릿 내부에 남겨놓는 로컬 상대 경로 링크를 온라인 CDN 주소로 강제 교정합니다.
+    # [이중 방어막] 충돌 유발 코드(utils.js 인위적 대체)를 전면 제거하고 핵심 vis-network 엔진 링크만 원격 CDN으로 완벽히 보장합니다.
     if os.path.exists(output_path):
         with open(output_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
-        # 상대 경로 자바스크립트 참조를 무조건 절대 경로(CDN)로 변환
         html_content = html_content.replace(
             'lib/vis-10.1.0/vis-network.min.js',
             'https://unpkg.com/vis-network/standalone/umd/vis-network.min.js'
-        ).replace(
-            'lib/bindings/utils.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js'
         )
         
         with open(output_path, 'w', encoding='utf-8') as f:

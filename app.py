@@ -1,3 +1,4 @@
+# app.py
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
@@ -5,6 +6,7 @@ import uuid
 import os
 import json
 import time
+import tempfile  # 크로스플랫폼 경로 표준 통일용 주입
 
 # 모듈 수입
 from database.local_db import init_local_db, save_user_run, get_user_history_by_email
@@ -48,12 +50,13 @@ if "last_cleanup_time" not in st.session_state:
 # =============================================================================
 # 3. [1단계] 임시 파일 가비지 컬렉터 실행 제어
 # =============================================================================
+# tempfile.gettempdir()를 기준으로 파일 청소를 수행하여 크로스플랫폼(Windows/Linux) 호환을 달성합니다.
 CLEANUP_INTERVAL_SECONDS = 1800 
 current_time = time.time()
 
 if current_time - st.session_state.last_cleanup_time > CLEANUP_INTERVAL_SECONDS:
     try:
-        deleted, failed = clean_temporary_files(target_dir="/tmp", max_age_seconds=3600)
+        deleted, failed = clean_temporary_files(target_dir=tempfile.gettempdir(), max_age_seconds=3600)
         st.session_state.last_cleanup_time = current_time
         if deleted > 0:
             print(f"[System GC] 만료된 임시 파일 {deleted}개가 정상 정리되었습니다. (실패: {failed}개)")
