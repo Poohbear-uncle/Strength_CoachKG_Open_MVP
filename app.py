@@ -47,6 +47,12 @@ if "bypass_db" not in st.session_state:
 if "last_cleanup_time" not in st.session_state:
     st.session_state.last_cleanup_time = 0
 
+# [개선] B, C그룹 점진적 무한 전수조사 제어용 스위치 정의
+if "show_all_b" not in st.session_state:
+    st.session_state.show_all_b = False
+if "show_all_c" not in st.session_state:
+    st.session_state.show_all_c = False
+
 # =============================================================================
 # 3. [1단계] 임시 파일 가비지 컬렉터 실행 제어
 # =============================================================================
@@ -58,9 +64,9 @@ if current_time - st.session_state.last_cleanup_time > CLEANUP_INTERVAL_SECONDS:
         deleted, failed = clean_temporary_files(target_dir=tempfile.gettempdir(), max_age_seconds=3600)
         st.session_state.last_cleanup_time = current_time
         if deleted > 0:
-            print(f"[System GC] 만료된 임시 파일 {deleted}개가 정상 정리되었습니다. (실패: {failed}개)")
+            print(f"[System GC] 임시 파일 {deleted}개 청소 완료")
     except Exception as gc_err:
-        print(f"[System GC] 백그라운드 클리닝 중 예외가 방어되었습니다: {gc_err}")
+        print(f"[System GC] 예외 방어됨: {gc_err}")
 
 # 앱 최초 실행 시 SQLite 로컬 로그 테이블 초기화 보장
 init_local_db()
@@ -151,7 +157,7 @@ if st.session_state.step == 1:
             if search_email:
                 history = get_user_history_by_email(search_email)
                 if history:
-                    st.success(f"과거 {len(history) // 24 if len(history) >= 24 else 1}건의 누적 데이터 로그를 발견했습니다.")
+                    st.success(f"과거 데이터 로그를 발견했습니다.")
                     latest_run = history[:24]
                     
                     rebuilt_results = []
@@ -397,28 +403,46 @@ elif st.session_state.step == 3:
     with tab_b:
         if group_b_results:
             st.write("💡 **보완 강점 활용법:** 핵심 강점의 부작용을 통제하고 완충 작용을 해주는 예비 가치 자원입니다.")
-            for idx, r in enumerate(group_b_results[:3], 1):
+            
+            # [개선 4] 동적 무한 전수 펼치기 인터랙션 적용
+            limit_b = len(group_b_results) if st.session_state.show_all_b else 3
+            for idx, r in enumerate(group_b_results[:limit_b], 1):
                 with st.container(border=True):
                     st.markdown(f"**🟡 {r['name']}** (소속 덕목: {r['virtue']})")
                     st.markdown(get_contextual_interpretation(r["code"], "complementary"))
             
-            if len(group_b_results) > 3:
-                with st.expander(f"그 외 {len(group_b_results) - 3}개의 보완 강점 목록 보기"):
-                    st.write(", ".join([r["name"] for r in group_b_results[3:]]))
+            # 점진적 전수 노출 제어 버튼
+            if not st.session_state.show_all_b:
+                if st.button("➕ 보완 강점 전체 펼쳐보기 (전수 조사)", key="btn_show_all_b"):
+                    st.session_state.show_all_b = True
+                    st.rerun()
+            else:
+                if st.button("➖ 보완 강점 요약해 보기 (3개만 보기)", key="btn_hide_all_b"):
+                    st.session_state.show_all_b = False
+                    st.rerun()
         else:
             st.info("자가 소팅 시 '보완 강점(B)'으로 분류된 항목이 없습니다.")
 
     with tab_c:
         if group_c_results:
             st.write("💡 **미개발 영역 대응법:** 약점을 억지로 극복하기보다 타인과의 협업 및 도구 사용을 통한 우회 전략을 추천합니다.")
-            for idx, r in enumerate(group_c_results[:3], 1):
+            
+            # [개선 4] 동적 무한 전수 펼치기 인터랙션 적용
+            limit_c = len(group_c_results) if st.session_state.show_all_c else 3
+            for idx, r in enumerate(group_c_results[:limit_c], 1):
                 with st.container(border=True):
                     st.markdown(f"**🔴 {r['name']}** (소속 덕목: {r['virtue']})")
                     st.markdown(get_contextual_interpretation(r["code"], "undeveloped"))
             
-            if len(group_c_results) > 3:
-                with st.expander(f"그 외 {len(group_c_results) - 3}개의 일반/미개발 강점 목록 보기"):
-                    st.write(", ".join([r["name"] for r in group_c_results[3:]]))
+            # 점진적 전수 노출 제어 버튼
+            if not st.session_state.show_all_c:
+                if st.button("➕ 일반/미개발 강점 전체 펼쳐보기 (전수 조사)", key="btn_show_all_c"):
+                    st.session_state.show_all_c = True
+                    st.rerun()
+            else:
+                if st.button("➖ 일반/미개발 강점 요약해 보기 (3개만 보기)", key="btn_hide_all_c"):
+                    st.session_state.show_all_c = False
+                    st.rerun()
         else:
             st.info("자가 소팅 시 '일반/미개발 강점(C)'으로 분류된 항목이 없습니다.")
 
@@ -430,7 +454,8 @@ elif st.session_state.step == 3:
     
     with c1:
         try:
-            pdf_path = generate_pdf_report(st.session_state.browser_session_id, meta, top_5)
+            # [개선 4] PDF에 전수 데이터를 동적으로 처리할 수 있도록 results(전체 리스트)를 주입합니다.
+            pdf_path = generate_pdf_report(st.session_state.browser_session_id, meta, results)
             if os.path.exists(pdf_path):
                 with open(pdf_path, "rb") as pdf_file:
                     st.download_button(
@@ -449,5 +474,7 @@ elif st.session_state.step == 3:
             st.session_state.user_meta = {}
             st.session_state.card_sorting = {}
             st.session_state.results = []
+            st.session_state.show_all_b = False
+            st.session_state.show_all_c = False
             st.session_state.browser_session_id = uuid.uuid4().hex[:10]
             st.rerun()
