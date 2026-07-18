@@ -388,3 +388,60 @@ def generate_pdf_report(session_token, user_meta, top_5_results):
     
     pdf.output(output_pdf_path)
     return output_pdf_path
+
+# core/report_gen.py 내의 PDF 빌더 메서드 가상 패치 예시
+
+def add_complementary_section(pdf, results, ontology_map):
+    """
+    PDF 보고서의 종결부에 보완 및 미개발 강점 지반 분석 페이지를 동적으로 렌더링합니다.
+    """
+    # 새 페이지 추가
+    pdf.add_page()
+    
+    # 타이틀 영역
+    pdf.set_font("NanumGothic-Bold", size=14)
+    pdf.cell(0, 10, txt="🧭 보완 강점 및 일반/미개발 영역 제언", ln=1, align="L")
+    pdf.ln(5)
+    
+    # 텍스트 바디 폰트 설정
+    pdf.set_font("NanumGothic", size=9)
+    
+    group_b = [r for r in results if r["group"] == "B"][:2] # 지면 한계 상 각각 상위 2개씩 수록
+    group_c = [r for r in results if r["group"] == "C"][:2]
+    
+    # --- 보완 강점 출력 ---
+    pdf.set_text_color(230, 126, 34) # 주황색 (B그룹 상징)
+    pdf.cell(0, 8, txt="■ 보완적 균형 지대 (Group B)", ln=1)
+    pdf.set_text_color(0, 0, 0)
+    
+    for r in group_b:
+        s_detail = ontology_map.get(r["code"], {})
+        # 폴백 로직 적용
+        interp = "이 강점은 핵심 역량이 흐려질 때 이를 보정해 주는 보조 자원입니다."
+        if "interpretation" in s_detail and "complementary" in s_detail["interpretation"]:
+            interp = s_detail["interpretation"]["complementary"]
+            
+        pdf.set_font("NanumGothic-Bold", size=10)
+        pdf.cell(0, 6, txt=f" - {r['name']} ({r['virtue']})", ln=1)
+        pdf.set_font("NanumGothic", size=9)
+        pdf.multi_cell(0, 5, txt=interp)
+        pdf.ln(3)
+        
+    pdf.ln(5)
+    
+    # --- 일반/미개발 강점 출력 ---
+    pdf.set_text_color(231, 76, 60) # 빨간색 (C그룹 상징)
+    pdf.cell(0, 8, txt="■ 일반 및 미개발 지대 (Group C)", ln=1)
+    pdf.set_text_color(0, 0, 0)
+    
+    for r in group_c:
+        s_detail = ontology_map.get(r["code"], {})
+        interp = "무리한 역량 보완보다는 타인과의 협업 및 시스템적 위임을 권장하는 영역입니다."
+        if "interpretation" in s_detail and "undeveloped" in s_detail["interpretation"]:
+            interp = s_detail["interpretation"]["undeveloped"]
+            
+        pdf.set_font("NanumGothic-Bold", size=10)
+        pdf.cell(0, 6, txt=f" - {r['name']} ({r['virtue']})", ln=1)
+        pdf.set_font("NanumGothic", size=9)
+        pdf.multi_cell(0, 5, txt=interp)
+        pdf.ln(3)

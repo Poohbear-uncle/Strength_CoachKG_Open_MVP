@@ -4,6 +4,7 @@ import base64
 import uuid
 import os
 import json
+import time
 
 # 모듈 수입
 from database.local_db import init_local_db, save_user_run, get_user_history_by_email
@@ -11,10 +12,11 @@ from database.neo4j_sync import sync_to_neo4j_safely
 from core.assessment import calculate_scores, load_ontology
 from core.graph_visual import build_pyvis_graph
 from core.report_gen import generate_pdf_report
+from core.cleaner import clean_temporary_files  # 1단계 가비지 컬렉터 수입
 
-# 앱 최초 실행 시 SQLite 로컬 로그 테이블 초기화 보장
-init_local_db()
-
+# =============================================================================
+# 1. STREAMLIT 규정 준수 영역 (최우선 실행)
+# =============================================================================
 st.set_page_config(page_title="CoachKG Navigator", layout="wide", page_icon="🧭")
 
 # 스타일 보완을 위한 임시 CSS 패치
@@ -25,9 +27,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# [세션 상태 관리 모델 정의]
-# -----------------------------------------------------------------------------
+# =============================================================================
+# 2. 세션 상태 관리 모델 정의 및 초기화
+# =============================================================================
 if "browser_session_id" not in st.session_state:
     st.session_state.browser_session_id = uuid.uuid4().hex[:10]
 if "step" not in st.session_state:
@@ -38,93 +40,44 @@ if "card_sorting" not in st.session_state:
     st.session_state.card_sorting = {}
 if "results" not in st.session_state:
     st.session_state.results = []
-# [추가] 변수 유실 방지 전역 상태 정의
 if "bypass_db" not in st.session_state:
     st.session_state.bypass_db = False
+if "last_cleanup_time" not in st.session_state:
+    st.session_state.last_cleanup_time = 0
 
+# =============================================================================
+# 3. [1단계] 임시 파일 가비지 컬렉터 실행 제어
+# =============================================================================
+CLEANUP_INTERVAL_SECONDS = 1800 
+current_time = time.time()
+
+if current_time - st.session_state.last_cleanup_time > CLEANUP_INTERVAL_SECONDS:
+    try:
+        deleted, failed = clean_temporary_files(target_dir="/tmp", max_age_seconds=3600)
+        st.session_state.last_cleanup_time = current_time
+        if deleted > 0:
+            print(f"[System GC] 만료된 임시 파일 {deleted}개가 정상 정리되었습니다. (실패: {failed}개)")
+    except Exception as gc_err:
+        print(f"[System GC] 백그라운드 클리닝 중 예외가 방어되었습니다: {gc_err}")
+
+# 앱 최초 실행 시 SQLite 로컬 로그 테이블 초기화 보장
+init_local_db()
 
 # 🧭 타이틀 헤더
 st.title("🧭 동적 강점 내비게이터")
 st.caption("비회원 개방형 - 3단계 하이브리드 강점 가치 지도 진단 서비스")
 st.markdown("---")
 
-# # =============================================================================
-# # 🛠️ [실시간 시스템 진단 및 상태 모니터 대시보드 - 영구 고정형]
-# # =============================================================================
-# with st.expander("🛠️ 실시간 시스템 디버깅 대시보드 (진단용)", expanded=True):
-#     st.write("### 🖥️ 세션 및 상태 데이터 실시간 모니터")
-#     db_col1, db_col2, db_col3 = st.columns(3)
-#     with db_col1:
-#         st.metric("현재 진행 단계 (Step)", st.session_state.step)
-#     with db_col2:
-#         st.metric("세션 ID (Browser ID)", st.session_state.browser_session_id)
-#     with db_col3:
-#         st.metric("유저 정보 입력 여부", "Yes" if st.session_state.user_meta else "No")
-        
-#     st.write("📂 **1단계 분류 데이터 (card_sorting) 적재 상태:**")
-#     if st.session_state.card_sorting:
-#         a_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "A")
-#         b_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "B")
-#         c_cnt = sum(1 for v in st.session_state.card_sorting.values() if v == "C")
-        
-#         if a_cnt == 0:
-#             st.error("🚨 경고: A(핵심 강점)로 분류된 강점이 0개입니다. 이 상태로는 2단계 문항이 출력되지 않습니다.")
-#         else:
-#             st.success(f"🟢 **A (핵심):** {a_cnt}개 | 🟡 **B (보완):** {b_cnt}개 | 🔴 **C (일반):** {c_cnt}개 저장 중")
-#     else:
-#         st.warning("⚠️ 분류 데이터가 완전히 비어 있습니다.")
-        
-#     st.write("⚙️ **강제 제어 및 병목 구간 검증기:**")
-#     # [수정] 체크 상태를 전역 세션 상태값에 바로 대입하여 영구 보존
-#     st.session_state.bypass_db = st.checkbox(
-#         "⚠️ 디버그: SQLite 및 Neo4j 저장 건너뛰고 결과 바로보기 (체크 권장)", 
-#         value=st.session_state.bypass_db
-#     )    
-#     btn_col1, btn_col2, btn_col3 = st.columns(3)
-#     with btn_col1:
-#         if st.button("🔄 강제 Step 1로 리셋"):
-#             st.session_state.step = 1
-#             st.session_state.card_sorting = {}
-#             st.session_state.results = []
-#             st.session_state.user_meta = {}
-#             st.rerun()
-#     with btn_col2:
-#         if st.button("⚠️ 강제 Step 2로 점프"):
-#             st.session_state.step = 2
-#             st.rerun()
-#     with btn_col3:
-#         if st.button("🏆 강제 Step 3로 이동 (테스트 데이터 주입)"):
-#             st.session_state.step = 3
-#             st.session_state.user_meta = {"name": "디버그길동", "email": "debug@domain.com"}
-#             ontology = load_ontology()
-#             dummy_results = []
-#             for s in ontology["strengths"][:5]:
-#                 dummy_results.append({
-#                     "code": s["code"],
-#                     "name": s["name"],
-#                     "virtue": s.get("virtue_name", "덕목군"),
-#                     "virtue_code": s.get("virtue_code", "VIR_UNKNOWN"),
-#                     "group": "A",
-#                     "final_score": 4.8,
-#                     "summary": s.get("summary", "테스트용 설명문구입니다."),
-#                     "keywords": s.get("keywords", ["키워드1", "키워드2"])
-#                 })
-#             st.session_state.results = dummy_results
-#             st.rerun()
-            
-st.markdown("---")
 
-# -----------------------------------------------------------------------------
+# =============================================================================
 # STEP 1: 익명 식별 정보 기입 및 1차 카드 소팅 (개선형 3분류 카드 뷰)
-# -----------------------------------------------------------------------------
+# =============================================================================
 if st.session_state.step == 1:
     st.subheader("1단계: 정보 입력 및 자가 강점 소팅")
     st.info("💡 별도의 비밀번호가 필요 없는 완전 공개형 서비스입니다. 기재하신 정보는 중복 데이터 방지와 PDF 리포트 기입, 이력 복원에만 활용됩니다.")
     
-    # 온톨로지에서 가용 강점 명단 로드
     ontology = load_ontology()
     
-    # 5대 대덕목별 강점 그룹화 준비
     from collections import defaultdict
     grouped_strengths = defaultdict(list)
     for s in ontology["strengths"]:
@@ -141,8 +94,9 @@ if st.session_state.step == 1:
         st.write("📂 **자가 강점 카드 분류 (Self Card-Sorting)**")
         st.write("아래 제시된 50가지 강점의 설명을 읽어보시고, 나에게 해당되는 수준에 맞게 **[A: 핵심]**, **[B: 보완]**, **[C: 일반]** 그룹으로 편안하게 소팅해 주세요.")
         st.caption("💡 각 탭(대덕목)을 클릭하면 소속된 강점 목록을 차례대로 확인하실 수 있습니다. 기본값은 'C: 일반/미개발'로 세팅되어 있습니다.")
+        st.caption("💡 각 탭(대덕목)을 돌아가면서 클릭하여야 전체 강점을 살펴보고 선택할 수 있습니다.")
+        st.caption("💡 '과거 진단 이력 복원' 기능을 통해 이전 기록을 불러올 수도 있습니다.")
         
-        # 5대 덕목에 대응하는 가로형 탭 생성
         virtue_names = list(grouped_strengths.keys())
         tabs = st.tabs(virtue_names)
         
@@ -159,7 +113,7 @@ if st.session_state.step == 1:
                             st.radio(
                                 label=f"분류 ({s['name']})",
                                 options=["A: 핵심 강점", "B: 보완 강점", "C: 일반/미개발"],
-                                index=2,  # 기본값 C로 세팅
+                                index=2,
                                 horizontal=True,
                                 key=f"sort_{s['code']}",
                                 label_visibility="collapsed"
@@ -187,7 +141,6 @@ if st.session_state.step == 1:
                     st.session_state.step = 2
                     st.rerun()
 
-    # --- 무인증 이력 복원 레이어 (하단 배치) ---
     st.markdown("---")
     with st.expander("🔍 내 이전 진단 이력 즉시 복원하기"):
         st.write("과거에 이메일을 기재하여 진행했던 진단 이력이 있다면, 아래에 동일한 이메일을 기입하여 실시간으로 복원할 수 있습니다.")
@@ -223,19 +176,18 @@ if st.session_state.step == 1:
                 else:
                     st.warning("입력하신 이메일로 저장된 과거 진단 이력이 존재하지 않습니다.")
 
-# -----------------------------------------------------------------------------
+
+# =============================================================================
 # STEP 2: 축소 지표 검증 (리커트 척도 평정)
-# -----------------------------------------------------------------------------
+# =============================================================================
 elif st.session_state.step == 2:
     st.subheader("2단계: 선별 대표 강점 입증 검증")
     meta = st.session_state.user_meta
     st.write(f"✍️ **{meta['name']}님**, 고르신 핵심 강점들을 실제 자주 실천하고 보람을 느끼는지 척도 검증을 수행합니다.")
     
-    # 1단계에서 가져온 ontology 매핑
     ontology = load_ontology()
     s_map = {s["code"]: s for s in ontology["strengths"]}
     
-    # data/questions.json에서 축소 문항 로드
     questions_path = os.path.join(os.path.dirname(__file__), "data", "questions.json")
     with open(questions_path, "r", encoding="utf-8") as qf:
         questions_dict = json.load(qf)
@@ -249,7 +201,6 @@ elif st.session_state.step == 2:
             st.write(f"**[{s_name}]** 강점 검증 질문")
             st.info(f"👉 질문: {questions_dict.get(code, '나는 해당 강점 사용에 큰 가치와 의미를 부여한다.')}")
             
-            # 슬라이더 평정
             score_val = st.slider(
                 "전혀 그렇지 않다 (1)  ~  매우 그렇다 (5)", 
                 min_value=1, max_value=5, value=3, key=f"q_{code}"
@@ -259,26 +210,19 @@ elif st.session_state.step == 2:
             
         submit_step2 = st.form_submit_button("최종 분석 완료 및 우주 지도 펼치기", key="btn_submit_step2")
         
-    # -------------------------------------------------------------------------
-    # [초안정화 수술] 비즈니스 연산 성공 시 화면 전환을 최우선 보장하는 구조 설계
-    # -------------------------------------------------------------------------
     if submit_step2:
         transition_to_step3 = False
         st.write("🔄 **[디버그 로그]** 제출 버튼 동작 감지됨. 분석 연산을 시작합니다...")
         
         try:
-            # 1. 핵심 분석 연산 (이것만 성공하면 결과 화면 무조건 진입 보장)
             st.write("🔢 1. 강점 온톨로지 가중치 합산 연산 수행 중...")
             raw_results = calculate_scores(st.session_state.card_sorting, survey_responses)
             st.session_state.results = raw_results
             st.write("✅ 1단계 강점 분석 연산 완료!")
             
-            # 메인 데이터 준비 완료되었으므로 화면 전환 자격 획득
             transition_to_step3 = True
             
-            # 2. 비핵심 저장 장치 제어 (Soft-Fail 처리: 실패해도 분석 지도를 보는데 지장을 주지 않음)
             if not st.session_state.get("bypass_db", False):
-                # SQLite 저장부 방어선 구축
                 try:
                     st.write("💾 2. 분석 로그 로컬 SQLite3 DB 적재 중...")
                     save_user_run(
@@ -289,9 +233,8 @@ elif st.session_state.step == 2:
                     )
                     st.write("✅ 2단계 SQLite3 백업 완료!")
                 except Exception as db_err:
-                    st.warning(f"⚠️ 경고: 로컬 DB 로그 백업 과정에서 경고가 발생하였으나 분석은 계속 진행됩니다. ({db_err})")
+                    st.warning(f"⚠️ 경고: 로컬 DB 로그 백업 중 지연이 발생했으나 분석은 진행됩니다. ({db_err})")
                 
-                # Neo4j 동기화부 방어선 구축
                 try:
                     st.write("🌐 3. Neo4j AuraDB 클라우드 동기화 중...")
                     top_5_for_sync = [
@@ -301,9 +244,9 @@ elif st.session_state.step == 2:
                     sync_to_neo4j_safely(meta["email"], meta["name"], top_5_for_sync)
                     st.write("✅ 3단계 외부 Neo4j 싱크 완료!")
                 except Exception as sync_err:
-                    st.warning(f"⚠️ 경고: 원격 GraphDB 동기화에 지연이 발생했으나 분석은 계속 진행됩니다. ({sync_err})")
+                    st.warning(f"⚠️ 경고: 원격 GraphDB 동기화에 지연이 발생했으나 분석은 진행됩니다. ({sync_err})")
             else:
-                st.warning("⚠️ **[디버그 모드]** DB 백업 및 API 동기화 단계를 완전히 우회(Bypass)했습니다.")
+                st.warning("⚠️ **[디버그 모드]** DB 백업 및 API 동기화 단계를 우회(Bypass)했습니다.")
                 
         except Exception as calc_err:
             st.error("❌ 분석 처리 중 치명적인 예외가 발생했습니다.")
@@ -314,54 +257,66 @@ elif st.session_state.step == 2:
             st.session_state.step = 3
             st.rerun()
 
-# -----------------------------------------------------------------------------
+
+# =============================================================================
 # STEP 3: 동적 결과 분석 리포트 및 시각화 탐색
-# -----------------------------------------------------------------------------
+# =============================================================================
 elif st.session_state.step == 3:
     meta = st.session_state.user_meta
     results = st.session_state.results
     
-    # 최종 점수로 필터링된 상위 5대 핵심 강점 정의
     top_5 = [r for r in results if r["group"] == "A"][:5]
     if not top_5:
-        # A가 없을 시 최상위 5개 대체
         top_5 = results[:5]
         
     st.subheader(f"🏆 {meta['name']}님의 지능형 강점 지도 피드백")
     
+    # 상위 1차 지형도 및 상세 정보 열기
     col1, col2 = st.columns([1.2, 1])
     
     with col1:
         st.write("### 🌌 나의 강점 지식 지도")
         st.caption("대표 강점 5종과 이들의 소속 덕목(삼각형), 그리고 온톨로지 기반의 잠재적 보완/시너지 지형도입니다.")
         
-        # [신규 추가] 깔끔하고 정돈된 CSS 기반 범례(Legend) 레이어 출력
+        # [Phase 3] 동적 지식 필터 슬라이더 배치
+        explore_depth = st.slider(
+            "🧭 강점 관계도 탐색 깊이 (Relationship Depth)", 
+            min_value=1, 
+            max_value=2, 
+            value=1,
+            help="1단계는 내 핵심 강점들의 직접 연계된 요소만 보여줍니다. 2단계는 그 너머의 간접적인 연계 관계까지 온톨로지를 확장하여 심층 분석 지형을 구성합니다."
+        )
+        
+        # 깔끔하고 정돈된 CSS 기반 범례(Legend) 레이어 출력
         st.markdown("""
         <div style="background-color: #f8f9fa; padding: 12px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 0.85em; line-height: 1.6; margin-bottom: 15px; color: #2c3e50;">
             <strong>🧭 강점 지형도 범례 (Legend)</strong><br>
             🟢 <b>초록 원:</b> 나의 대표 강점 (크기=점수) | 
             ▲ <b>보라 삼각:</b> 상위 대덕목 | 
-            🔘 <b>회색 원:</b> 잠재적 연계 강점 영역<br>
-            <span style="color:#bdc3c7;">━━</span> 회색선: 덕목 소속 관계 | 
+            🔵 <b>남색 원:</b> 1차 이웃 강점 |
+            🔘 <b>회색 원:</b> 2차 간접 연계 강점 (심층)<br>
+            <span style="color:#e2e8f0;">━━</span> 회색선: 덕목 소속 관계 | 
             <span style="color:#2ecc71;">━━</span> 초록선: 상호 시너지 | 
             <span style="color:#e67e22;">- -</span> 주황 대시선: 상호 보완 균형 | 
             <span style="color:#e74c3c;">····</span> 빨간 점선: 주의 필요 상충
         </div>
         """, unsafe_allow_html=True)
         
-        # 1. 파일 생성 및 저장 절대 경로 반환 받기
-        html_path = build_pyvis_graph(st.session_state.browser_session_id, top_5)
+        # 고도화된 build_pyvis_graph 호출 (explore_depth 주입)
+        html_path = build_pyvis_graph(
+            st.session_state.browser_session_id, 
+            top_5, 
+            depth=explore_depth
+        )
         
         if os.path.exists(html_path):
             try:
                 with open(html_path, 'r', encoding='utf-8') as f:
                     html_data = f.read()
                 
-                # 1. HTML 소스를 Base64로 인코딩하여 웹 안전 포맷(Data URI)으로 변환
                 b64_html = base64.b64encode(html_data.encode('utf-8')).decode('utf-8')
                 iframe_src = f"data:text/html;base64,{b64_html}"
                 
-                # 2. 지원이 중단된 st.components.v1.html 대신 st.iframe으로 교체 출력
                 st.iframe(src=iframe_src, height=600)
                 
             except Exception as e:
@@ -373,17 +328,13 @@ elif st.session_state.step == 3:
         st.write("### 📑 최상위 강점 상세 정보")
         st.caption("💡 각 강점을 클릭하면 온톨로지(Graph) 기반의 과사용 위험성과 유기적 보완/상충 맥락을 조회할 수 있습니다.")
         
-        # 온톨로지 단일 진실 공급원(SoT) 로드 및 매핑
         ontology = load_ontology()
         s_map = {s["code"]: s for s in ontology["strengths"]}
         
         for idx, r in enumerate(top_5, 1):
             s_detail = s_map.get(r["code"], {})
+            overuse_text = s_detail.get("overuse", "이 강점을 지나치게 고집할 경우 주변과의 마찰이 발생할 수 있으니 유의하십시오.")
             
-            # 온톨로지에서 풍부한 지식 속성 추출
-            overuse_text = s_detail.get("overuse", "이 강점을 지나치게 고집할 경우, 주변과의 불협화음이나 의도치 않은 오해를 살 수 있으니 유의하십시오.")
-            
-            # 관계망 코드를 한글 강점명으로 역매핑
             synergy_list = [s_map[s_code]["name"] for s_code in s_detail.get("synergy_with", []) if s_code in s_map]
             balances_list = [s_map[b_code]["name"] for b_code in s_detail.get("balances", []) if b_code in s_map]
             conflicts_list = [s_map[c_code]["name"] for c_code in s_detail.get("conflicts_with", []) if c_code in s_map]
@@ -395,12 +346,9 @@ elif st.session_state.step == 3:
                     st.write(f"🏷️ **연관 키워드** : {', '.join(r['keywords'])}")
                 
                 st.markdown("---")
-                
-                # [개선 1] 과사용(Overuse) / 그림자(Shadow) 속성 노출
                 st.markdown(f"⚠️ **과사용(Overuse) 위험성 및 그림자:**")
                 st.info(overuse_text)
                 
-                # [개선 2] 관계망 역동성 정보 시각적 매핑
                 if synergy_list or balances_list or conflicts_list:
                     st.markdown("🔗 **유기적 지식 관계망 역동성:**")
                     if synergy_list:
@@ -409,14 +357,68 @@ elif st.session_state.step == 3:
                         st.write(f"- ⚖️ **상호 보완적 균형 (Balances):** {', '.join(balances_list)}")
                     if conflicts_list:
                         st.write(f"- ⚡ **주의할 대립/상충 (Conflicts):** {', '.join(conflicts_list)}")
-                    
-    # 리포트 다운로드 및 리셋 제어 버튼 설계
+
+    # =============================================================================
+    # [Phase 2] 보완 강점(Group B) 및 일반/미개발 강점(Group C) 입체 해석 레이어
+    # =============================================================================
+    st.markdown("---")
+    st.write("### ⚖️ 자가 소팅 기반 강점 지형 분석 (Group B & C)")
+    st.caption("대표 강점(A) 외에, 자가 소팅 과정에서 정비된 보완 강점과 일반/미개발 강점에 대한 맞춤형 행동 양식 제언입니다.")
+
+    group_b_results = [r for r in results if r["group"] == "B"]
+    group_c_results = [r for r in results if r["group"] == "C"]
+
+    tab_b, tab_c = st.tabs(["🟡 보완적 균형 지대 (Group B)", "🔴 일반 및 미개발 지대 (Group C)"])
+
+    ontology = load_ontology()
+    s_map = {s["code"]: s for s in ontology["strengths"]}
+
+    def get_contextual_interpretation(code, group_type):
+        s_detail = s_map.get(code, {})
+        if "interpretation" in s_detail and group_type in s_detail["interpretation"]:
+            return s_detail["interpretation"][group_type]
+        
+        s_name = s_detail.get("name", "해당 강점")
+        if group_type == "complementary":
+            return f"이 강점({s_name})은 현재 보완 장치 역할을 수행하고 있습니다. 핵심 강점이 과사용되어 독단이나 피로감을 낳을 때, 이 보완 강점을 의식적으로 환기하여 성과의 균형(Balances)을 잡아주는 완충제로 활용하시기 바랍니다."
+        else:
+            return f"이 강점({s_name})은 현재 일반 또는 미개발 영역에 머무르고 있습니다. 이를 극복하기 위해 과도한 에너지를 투입하기보다는, 이 강점을 핵심 무기로 보유한 동료를 찾아 협업(Complementary Partnership) 구도를 짜는 것이 현실적으로 유용합니다."
+
+    with tab_b:
+        if group_b_results:
+            st.write("💡 **보완 강점 활용법:** 핵심 강점의 부작용을 통제하고 완충 작용을 해주는 예비 가치 자원입니다.")
+            for idx, r in enumerate(group_b_results[:3], 1):
+                with st.container(border=True):
+                    st.markdown(f"**🟡 {r['name']}** (소속 덕목: {r['virtue']})")
+                    st.markdown(get_contextual_interpretation(r["code"], "complementary"))
+            
+            if len(group_b_results) > 3:
+                with st.expander(f"그 외 {len(group_b_results) - 3}개의 보완 강점 목록 보기"):
+                    st.write(", ".join([r["name"] for r in group_b_results[3:]]))
+        else:
+            st.info("자가 소팅 시 '보완 강점(B)'으로 분류된 항목이 없습니다.")
+
+    with tab_c:
+        if group_c_results:
+            st.write("💡 **미개발 영역 대응법:** 약점을 억지로 극복하기보다 타인과의 협업 및 도구 사용을 통한 우회 전략을 추천합니다.")
+            for idx, r in enumerate(group_c_results[:3], 1):
+                with st.container(border=True):
+                    st.markdown(f"**🔴 {r['name']}** (소속 덕목: {r['virtue']})")
+                    st.markdown(get_contextual_interpretation(r["code"], "undeveloped"))
+            
+            if len(group_c_results) > 3:
+                with st.expander(f"그 외 {len(group_c_results) - 3}개의 일반/미개발 강점 목록 보기"):
+                    st.write(", ".join([r["name"] for r in group_c_results[3:]]))
+        else:
+            st.info("자가 소팅 시 '일반/미개발 강점(C)'으로 분류된 항목이 없습니다.")
+
+    # =============================================================================
+    # [최종 액션 영역] PDF 다운로드 및 리셋 버튼 (화면 최하단에 배치)
+    # =============================================================================
     st.markdown("---")
     c1, c2 = st.columns(2)
     
     with c1:
-        # [방어 조치 적용] PDF 리포트 생성을 별도 예외 블록으로 완전 격리합니다.
-        # 폰트 다운로드 지연 등의 사유로 다운로드가 지연되더라도 지도가 안 그려지는 현상을 원천 방지합니다.
         try:
             pdf_path = generate_pdf_report(st.session_state.browser_session_id, meta, top_5)
             if os.path.exists(pdf_path):
@@ -433,7 +435,6 @@ elif st.session_state.step == 3:
                 
     with c2:
         if st.button("🔄 새로 진단 시작하기"):
-            # 세션 변수 올인원 포맷 리셋
             st.session_state.step = 1
             st.session_state.user_meta = {}
             st.session_state.card_sorting = {}
